@@ -13,8 +13,9 @@ const allowedOrigins = [
   'http://localhost:5200',
   'http://localhost:3000',
   // Production origins
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-  'https://jay-kirana.vercel.app'
+  'https://jay-kirana.vercel.app',
+  'https://jay-kirana-git-main-satvik8373.vercel.app',
+  'https://jay-kirana-satvik8373.vercel.app'
 ].filter(Boolean);
 
 // Middleware

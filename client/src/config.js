@@ -7,7 +7,7 @@ const getApiUrl = () => {
   // Second priority: Production URL
   if (window.location.hostname !== 'localhost') {
     // For Vercel deployment
-    return `${window.location.origin}/api`;
+    return 'https://jay-kirana-api.vercel.app/api';
   }
 
   // Default: Local development

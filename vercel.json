@@ -27,5 +27,10 @@
       "src": "/(.*)",
       "dest": "client/dist/index.html"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "MONGODB_URI": "@mongodb_uri",
+    "JWT_SECRET": "@jwt_secret"
+  }
 } 
