@@ -4,8 +4,6 @@ import config from '../config';
 
 const AuthContext = createContext();
 
-const ADMIN_EMAIL = 'satvikpatel8373@gmail.com';
-
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -14,7 +12,7 @@ export function AuthProvider({ children }) {
 
   // Set up axios interceptor for token
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(config.TOKEN_KEY);
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
@@ -25,17 +23,17 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem(config.TOKEN_KEY);
       if (token) {
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`${config.apiUrl}/user/me`);
+          const response = await axios.get(`${config.API_BASE_URL}/api/user/me`);
           setUser(response.data);
           setIsAuthenticated(true);
-          setIsAdmin(response.data.email === ADMIN_EMAIL);
+          setIsAdmin(response.data.email === config.ADMIN_EMAIL);
         } catch (error) {
           console.error('Error verifying token:', error);
-          localStorage.removeItem('token');
+          localStorage.removeItem(config.TOKEN_KEY);
           delete axios.defaults.headers.common['Authorization'];
           setIsAdmin(false);
         }
@@ -50,8 +48,8 @@ export function AuthProvider({ children }) {
     const { token, user } = userData;
     setIsAuthenticated(true);
     setUser(user);
-    setIsAdmin(user.email === ADMIN_EMAIL);
-    localStorage.setItem('token', token);
+    setIsAdmin(user.email === config.ADMIN_EMAIL);
+    localStorage.setItem(config.TOKEN_KEY, token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
@@ -59,7 +57,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setIsAdmin(false);
-    localStorage.removeItem('token');
+    localStorage.removeItem(config.TOKEN_KEY);
     delete axios.defaults.headers.common['Authorization'];
   };
 

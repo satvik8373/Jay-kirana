@@ -1,5 +1,5 @@
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 
@@ -17,6 +17,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
 npm-debug.log*
 yarn-debug.log*
@@ -27,6 +28,20 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
+
+# Uploads
+/server/uploads/*
+!/server/uploads/.gitkeep
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
 # Vercel
 .vercel 
