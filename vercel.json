@@ -1,19 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
   "builds": [
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
+    },
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "npm run build"
+        "distDir": "dist"
       }
-    },
-    {
-      "src": "server/index.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -22,19 +19,13 @@
       "dest": "server/index.js"
     },
     {
-      "src": "^/assets/(.*)",
-      "dest": "client/dist/assets/$1"
-    },
-    {
-      "src": "^/favicon.ico",
-      "dest": "client/dist/favicon.ico"
-    },
-    {
-      "src": ".*",
-      "dest": "client/dist/index.html"
+      "src": "/(.*)",
+      "dest": "client/dist/$1"
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "MONGODB_URI": "@mongodb_uri",
+    "JWT_SECRET": "@jwt_secret"
   }
 } 

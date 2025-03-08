@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import config from '../config';
+import { AUTH_CONFIG } from '../config';
 
 const AuthContext = createContext();
 
@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
 
   // Set up axios interceptor for token
   useEffect(() => {
-    const token = localStorage.getItem(config.TOKEN_KEY);
+    const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
@@ -23,17 +23,17 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem(config.TOKEN_KEY);
+      const token = localStorage.getItem('token');
       if (token) {
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get(`${config.API_BASE_URL}/api/user/me`);
+          const response = await axios.get('/api/user/me');
           setUser(response.data);
           setIsAuthenticated(true);
-          setIsAdmin(response.data.email === config.ADMIN_EMAIL);
+          setIsAdmin(response.data.email === AUTH_CONFIG.ADMIN_EMAIL);
         } catch (error) {
           console.error('Error verifying token:', error);
-          localStorage.removeItem(config.TOKEN_KEY);
+          localStorage.removeItem('token');
           delete axios.defaults.headers.common['Authorization'];
           setIsAdmin(false);
         }
@@ -48,8 +48,8 @@ export function AuthProvider({ children }) {
     const { token, user } = userData;
     setIsAuthenticated(true);
     setUser(user);
-    setIsAdmin(user.email === config.ADMIN_EMAIL);
-    localStorage.setItem(config.TOKEN_KEY, token);
+    setIsAdmin(user.email === AUTH_CONFIG.ADMIN_EMAIL);
+    localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setUser(null);
     setIsAdmin(false);
-    localStorage.removeItem(config.TOKEN_KEY);
+    localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
   };
 
