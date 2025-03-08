@@ -1,11 +1,14 @@
 {
   "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
   "builds": [
     {
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "buildCommand": "npm run build"
       }
     },
     {
@@ -19,8 +22,16 @@
       "dest": "server/index.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "client/dist/$1"
+      "src": "^/assets/(.*)",
+      "dest": "client/dist/assets/$1"
+    },
+    {
+      "src": "^/favicon.ico",
+      "dest": "client/dist/favicon.ico"
+    },
+    {
+      "src": ".*",
+      "dest": "client/dist/index.html"
     }
   ],
   "env": {
