@@ -5,8 +5,7 @@
       "src": "client/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "cd client && npm install && npm run build"
+        "distDir": "dist"
       }
     },
     {
@@ -20,17 +19,11 @@
       "dest": "server/index.js"
     },
     {
-      "src": "/(.*\\.[a-z0-9]+$)",
-      "dest": "client/dist/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "client/dist/index.html"
+      "dest": "client/dist/$1"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "MONGODB_URI": "@mongodb_uri",
-    "JWT_SECRET": "@jwt_secret"
+    "NODE_ENV": "production"
   }
 } 
