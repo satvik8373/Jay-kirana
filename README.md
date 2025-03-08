@@ -1,6 +1,6 @@
-# Jay-Kirana
+# Jay Kirana - Online Grocery Store
 
-A full-stack e-commerce application for grocery and daily essentials.
+A modern e-commerce platform for grocery shopping built with React.js and Node.js.
 
 ## Features
 
@@ -9,66 +9,74 @@ A full-stack e-commerce application for grocery and daily essentials.
 - Shopping cart functionality
 - Order management
 - Responsive design
-- Secure payment integration
+- Real-time product search
+- Category-based product filtering
 
 ## Tech Stack
 
-- Frontend: React.js with Vite
-- Backend: Node.js with Express
+- Frontend: React.js
+- Backend: Node.js, Express.js
 - Database: MongoDB
 - Authentication: JWT
 - Styling: CSS-in-JS
+- Icons: React Icons
+- State Management: Context API
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js
-- MongoDB
+- Node.js (v14 or higher)
 - npm or yarn
+- MongoDB
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository:
 ```bash
-git clone https://github.com/satvik8373/Jay-kirana.git
-cd Jay-kirana
+git clone https://github.com/satvik-8373/jay-kirana.git
+cd jay-kirana
 ```
 
-2. Install dependencies
+2. Install dependencies:
 ```bash
-# Install server dependencies
+# Install backend dependencies
 cd server
 npm install
 
-# Install client dependencies
+# Install frontend dependencies
 cd ../client
 npm install
 ```
 
-3. Set up environment variables
+3. Create environment variables:
 Create a `.env` file in the server directory with:
 ```
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
+PORT=5000
 ```
 
-4. Run the application
+4. Start the development servers:
 ```bash
-# Run server (from server directory)
+# Start backend server
+cd server
 npm run dev
 
-# Run client (from client directory)
-npm run dev
+# Start frontend server (in a new terminal)
+cd client
+npm start
 ```
+
+The application will be available at `http://localhost:3000`
 
 ## Deployment
 
-The application is deployed on Vercel. Visit [Jay-Kirana](https://jay-kirana.vercel.app) to see it live.
+The application is deployed on Vercel. The frontend is hosted on Vercel, and the backend is hosted on a separate server.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
