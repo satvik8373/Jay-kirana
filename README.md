@@ -12,26 +12,17 @@ jay-kirana/
 
 ## Prerequisites
 
-- Node.js 14.x or higher
+- Node.js 14+ and npm
 - MongoDB Atlas account
-- Gmail account (for email notifications)
-- Vercel account (for deployment)
+- Gmail account for email notifications
+- Vercel account for deployment
 
-## Installation & Setup
+## Environment Variables
 
-### Server Setup
+### Server (.env)
 
-1. Navigate to the server directory:
-```bash
-cd server
-```
+Create a `.env` file in the server directory with the following variables:
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file in the server directory with the following variables:
 ```env
 # MongoDB Connection
 MONGODB_URI=your_mongodb_atlas_uri
@@ -41,92 +32,160 @@ JWT_SECRET=your_jwt_secret_key
 
 # Email Configuration
 EMAIL_USER=your_gmail_address
-EMAIL_PASS=your_gmail_app_password
-EMAIL_SERVICE=gmail
+EMAIL_PASS=your_gmail_app_specific_password
 
 # Admin Configuration
 ADMIN_EMAIL=your_admin_email
 
-# Client URL (After deployment)
-CLIENT_URL=https://your-vercel-app-name.vercel.app
+# Client URL
+CLIENT_URL=https://your-frontend-domain.vercel.app
 
-# Server URL (After deployment)
-SERVER_URL=https://your-vercel-api-url.vercel.app
+# Server URL (for production)
+SERVER_URL=https://your-backend-domain.vercel.app
 ```
+
+### Client (.env)
+
+Create a `.env` file in the client directory:
+
+```env
+REACT_APP_API_URL=https://your-backend-domain.vercel.app
+```
+
+## Local Development Setup
+
+### Server Setup
+
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create necessary directories:
+   ```bash
+   mkdir uploads
+   mkdir uploads/avatars
+   mkdir uploads/marketing
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
 ### Client Setup
 
 1. Navigate to the client directory:
-```bash
-cd client
-```
+   ```bash
+   cd client
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Create a `.env` file in the client directory:
-```env
-VITE_API_URL=https://your-vercel-api-url.vercel.app
-```
-
-## Development
-
-### Running locally
-
-1. Start the server:
-```bash
-cd server
-npm run dev
-```
-
-2. Start the client:
-```bash
-cd client
-npm run dev
-```
+3. Start the development server:
+   ```bash
+   npm start
+   ```
 
 ## Deployment
 
-### Deploying to Vercel
+### Backend Deployment (Vercel)
 
-1. Server Deployment:
-   - Create a new project on Vercel
-   - Connect your GitHub repository
-   - Set the following environment variables in Vercel:
-     - All variables from server's `.env` file
-   - Set the build command: `npm install && npm run build`
-   - Set the output directory: `dist`
-   - Deploy
+1. Install Vercel CLI:
+   ```bash
+   npm i -g vercel
+   ```
 
-2. Client Deployment:
-   - Create a new project on Vercel
-   - Connect your GitHub repository
-   - Set the environment variables:
-     - `VITE_API_URL`: Your Vercel API URL
-   - Set the build command: `npm install && npm run build`
-   - Set the output directory: `dist`
-   - Deploy
+2. Create a `vercel.json` file in the server directory:
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "index.js",
+         "use": "@vercel/node"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/(.*)",
+         "dest": "index.js"
+       }
+     ]
+   }
+   ```
+
+3. Configure environment variables in Vercel:
+   - Go to your project settings in Vercel
+   - Add all the environment variables from your `.env` file
+
+4. Deploy the server:
+   ```bash
+   cd server
+   vercel
+   ```
+
+### Frontend Deployment (Vercel)
+
+1. Update the environment variables in the client's `.env` file with your production backend URL
+
+2. Build the project:
+   ```bash
+   cd client
+   npm run build
+   ```
+
+3. Deploy to Vercel:
+   ```bash
+   vercel
+   ```
+
+## File Storage in Production
+
+For production, consider using cloud storage solutions like:
+- AWS S3
+- Cloudinary
+- Firebase Storage
+
+This is because Vercel's serverless functions are stateless and don't persist files.
+
+## Important Notes
+
+1. Make sure to update CORS settings with your production domain
+2. Use environment variables for all configuration
+3. Set up proper security headers
+4. Enable proper MongoDB Atlas network access
+5. Configure Gmail with App-Specific Password for email functionality
 
 ## Features
 
 - User authentication and authorization
 - Product management
 - Order processing
-- Category management
+- Email notifications
 - Marketing email campaigns
-- Profile management with avatar upload
+- User profile management
+- Admin dashboard
 - Responsive design
 
-## Security Notes
+## Tech Stack
 
-1. Never commit `.env` files to version control
-2. Use strong JWT secrets
-3. Enable 2FA on your Gmail account
-4. Use environment variables for sensitive data
-5. Keep dependencies updated
+- Frontend: React.js
+- Backend: Node.js with Express
+- Database: MongoDB
+- Authentication: JWT
+- Email: Nodemailer with Gmail
+- File Upload: Multer
+- Deployment: Vercel
 
 ## Support
 
-For support, email satvikpatel8373@gmail.com
+For any issues or questions, please contact the development team.
