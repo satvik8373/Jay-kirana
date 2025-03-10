@@ -3,6 +3,7 @@ import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
 import Orders from '../components/admin/Orders';
 import Sidebar from '../components/admin/Sidebar';
+import EmailMarketing from '../components/EmailMarketing';
 
 function Admin() {
   const [activeSection, setActiveSection] = useState('orders');
@@ -15,6 +16,8 @@ function Admin() {
         return <AddProduct />;
       case 'manage-products':
         return <ManageProducts />;
+      case 'email-marketing':
+        return <EmailMarketing />;
       default:
         return <Orders />;
     }

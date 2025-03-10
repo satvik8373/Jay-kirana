@@ -1,83 +1,132 @@
-# Jay Kirana - Online Grocery Store
+# Jay Kirana Store
 
-A modern e-commerce platform for grocery shopping built with React.js and Node.js.
+A full-stack e-commerce application for grocery store management.
 
-## Features
+## Project Structure
 
-- User authentication and authorization
-- Admin dashboard for product management
-- Shopping cart functionality
-- Order management
-- Responsive design
-- Real-time product search
-- Category-based product filtering
+```
+jay-kirana/
+├── client/         # React frontend
+└── server/         # Node.js backend
+```
 
-## Tech Stack
+## Prerequisites
 
-- Frontend: React.js
-- Backend: Node.js, Express.js
-- Database: MongoDB
-- Authentication: JWT
-- Styling: CSS-in-JS
-- Icons: React Icons
-- State Management: Context API
+- Node.js 14.x or higher
+- MongoDB Atlas account
+- Gmail account (for email notifications)
+- Vercel account (for deployment)
 
-## Getting Started
+## Installation & Setup
 
-### Prerequisites
+### Server Setup
 
-- Node.js (v14 or higher)
-- npm or yarn
-- MongoDB
-
-### Installation
-
-1. Clone the repository:
+1. Navigate to the server directory:
 ```bash
-git clone https://github.com/satvik-8373/jay-kirana.git
-cd jay-kirana
+cd server
 ```
 
 2. Install dependencies:
 ```bash
-# Install backend dependencies
-cd server
-npm install
-
-# Install frontend dependencies
-cd ../client
 npm install
 ```
 
-3. Create environment variables:
-Create a `.env` file in the server directory with:
-```
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-PORT=5000
+3. Create a `.env` file in the server directory with the following variables:
+```env
+# MongoDB Connection
+MONGODB_URI=your_mongodb_atlas_uri
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_key
+
+# Email Configuration
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
+EMAIL_SERVICE=gmail
+
+# Admin Configuration
+ADMIN_EMAIL=your_admin_email
+
+# Client URL (After deployment)
+CLIENT_URL=https://your-vercel-app-name.vercel.app
+
+# Server URL (After deployment)
+SERVER_URL=https://your-vercel-api-url.vercel.app
 ```
 
-4. Start the development servers:
+### Client Setup
+
+1. Navigate to the client directory:
 ```bash
-# Start backend server
+cd client
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env` file in the client directory:
+```env
+VITE_API_URL=https://your-vercel-api-url.vercel.app
+```
+
+## Development
+
+### Running locally
+
+1. Start the server:
+```bash
 cd server
 npm run dev
-
-# Start frontend server (in a new terminal)
-cd client
-npm start
 ```
 
-The application will be available at `http://localhost:3000`
+2. Start the client:
+```bash
+cd client
+npm run dev
+```
 
 ## Deployment
 
-The application is deployed on Vercel. The frontend is hosted on Vercel, and the backend is hosted on a separate server.
+### Deploying to Vercel
 
-## Contributing
+1. Server Deployment:
+   - Create a new project on Vercel
+   - Connect your GitHub repository
+   - Set the following environment variables in Vercel:
+     - All variables from server's `.env` file
+   - Set the build command: `npm install && npm run build`
+   - Set the output directory: `dist`
+   - Deploy
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+2. Client Deployment:
+   - Create a new project on Vercel
+   - Connect your GitHub repository
+   - Set the environment variables:
+     - `VITE_API_URL`: Your Vercel API URL
+   - Set the build command: `npm install && npm run build`
+   - Set the output directory: `dist`
+   - Deploy
 
-## License
+## Features
 
-[MIT](https://choosealicense.com/licenses/mit/) # Jay-Kirana
+- User authentication and authorization
+- Product management
+- Order processing
+- Category management
+- Marketing email campaigns
+- Profile management with avatar upload
+- Responsive design
+
+## Security Notes
+
+1. Never commit `.env` files to version control
+2. Use strong JWT secrets
+3. Enable 2FA on your Gmail account
+4. Use environment variables for sensitive data
+5. Keep dependencies updated
+
+## Support
+
+For support, email satvikpatel8373@gmail.com

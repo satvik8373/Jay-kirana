@@ -48,6 +48,63 @@ function ProductCard({ product, addToCart }) {
   const config = categoryConfig[category] || defaultConfig;
   const Icon = config.icon;
 
+  const handleAddToCart = (e) => {
+    const productCard = e.currentTarget.closest('.product-card');
+    const productImage = productCard.querySelector('.product-image');
+    const cartIcon = document.querySelector('.nav-icons .icon-wrapper:first-child');
+
+    if (productImage && cartIcon) {
+      // Create flying image element
+      const flyingImage = productImage.cloneNode(true);
+      const rect = productImage.getBoundingClientRect();
+      const cartRect = cartIcon.getBoundingClientRect();
+
+      // Set initial styles for the flying image
+      flyingImage.style.cssText = `
+        position: fixed;
+        z-index: 1000;
+        left: ${rect.left}px;
+        top: ${rect.top}px;
+        width: ${rect.width}px;
+        height: ${rect.height}px;
+        border-radius: 8px;
+        transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        pointer-events: none;
+      `;
+
+      document.body.appendChild(flyingImage);
+
+      // Trigger animation
+      setTimeout(() => {
+        flyingImage.style.cssText = `
+          position: fixed;
+          z-index: 1000;
+          left: ${cartRect.left}px;
+          top: ${cartRect.top}px;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+          pointer-events: none;
+          opacity: 0;
+          transform: scale(0.3);
+        `;
+
+        // Add pulse effect to cart icon
+        cartIcon.classList.add('cart-pulse');
+
+        // Remove flying image and pulse effect after animation
+        setTimeout(() => {
+          document.body.removeChild(flyingImage);
+          cartIcon.classList.remove('cart-pulse');
+        }, 800);
+      }, 50);
+    }
+
+    // Call the original addToCart function
+    addToCart(product);
+  };
+
   return (
     <div className="product-card">
       <div className="product-image-container">
@@ -76,7 +133,7 @@ function ProductCard({ product, addToCart }) {
         
         {product.stock > 0 ? (
           <button 
-            onClick={() => addToCart(product)}
+            onClick={handleAddToCart}
             className="add-to-cart-btn"
             style={{ background: config.gradient }}
           >
@@ -98,6 +155,9 @@ function ProductCard({ product, addToCart }) {
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
           transition: all 0.3s ease;
           position: relative;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
 
         .product-card:hover {
@@ -108,11 +168,14 @@ function ProductCard({ product, addToCart }) {
         .product-image-container {
           position: relative;
           width: 100%;
-          height: 200px;
+          padding-top: 75%; /* 4:3 Aspect Ratio */
           overflow: hidden;
         }
 
         .product-image {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -136,6 +199,7 @@ function ProductCard({ product, addToCart }) {
           gap: 5px;
           backdrop-filter: blur(5px);
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          z-index: 1;
         }
 
         .category-icon {
@@ -143,13 +207,17 @@ function ProductCard({ product, addToCart }) {
         }
 
         .product-info {
-          padding: 20px;
+          padding: var(--spacing-md);
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          gap: var(--spacing-sm);
         }
 
         h3 {
-          color: #1a237e;
+          color: var(--primary-color);
           font-size: 1.1rem;
-          margin: 0 0 15px 0;
+          margin: 0;
           font-weight: 600;
           height: 2.4em;
           overflow: hidden;
@@ -162,13 +230,13 @@ function ProductCard({ product, addToCart }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 15px;
+          margin: var(--spacing-sm) 0;
         }
 
         .price {
           font-size: 1.2rem;
           font-weight: 700;
-          color: #1a237e;
+          color: var(--primary-color);
         }
 
         .stock {
@@ -200,6 +268,7 @@ function ProductCard({ product, addToCart }) {
           justify-content: center;
           gap: 8px;
           transition: all 0.3s ease;
+          margin-top: auto;
         }
 
         .add-to-cart-btn:hover {
@@ -220,11 +289,12 @@ function ProductCard({ product, addToCart }) {
           color: #999;
           font-weight: 600;
           cursor: not-allowed;
+          margin-top: auto;
         }
 
-        @media (max-width: 768px) {
-          .product-image-container {
-            height: 180px;
+        @media (max-width: 1024px) {
+          .product-info {
+            padding: var(--spacing-sm);
           }
 
           h3 {
@@ -237,6 +307,88 @@ function ProductCard({ product, addToCart }) {
 
           .stock {
             font-size: 0.8rem;
+          }
+
+          .add-to-cart-btn,
+          .out-of-stock-btn {
+            padding: 10px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .product-image-container {
+            padding-top: 66.67%; /* 3:2 Aspect Ratio */
+          }
+
+          .category-badge {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+          }
+
+          .category-icon {
+            font-size: 0.9rem;
+          }
+
+          h3 {
+            font-size: 0.95rem;
+            height: 2.6em;
+          }
+
+          .price {
+            font-size: 1rem;
+          }
+
+          .stock {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+          }
+
+          .cart-icon {
+            font-size: 1rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .product-image-container {
+            padding-top: 60%; /* 5:3 Aspect Ratio */
+          }
+
+          .product-info {
+            padding: var(--spacing-xs);
+          }
+
+          h3 {
+            font-size: 0.9rem;
+          }
+
+          .price {
+            font-size: 0.95rem;
+          }
+
+          .stock {
+            font-size: 0.7rem;
+          }
+
+          .add-to-cart-btn,
+          .out-of-stock-btn {
+            padding: 8px;
+            font-size: 0.9rem;
+          }
+
+          .cart-icon {
+            font-size: 0.9rem;
+          }
+        }
+
+        @keyframes cartPulse {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.3);
+          }
+          100% {
+            transform: scale(1);
           }
         }
       `}</style>

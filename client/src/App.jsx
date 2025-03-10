@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
+import MobileHeader from './components/MobileHeader';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
@@ -10,6 +11,7 @@ import ResetPassword from './pages/ResetPassword';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Profile from './components/Profile';
 import './index.css';
 
 function ProtectedRoute({ children, requireAdmin }) {
@@ -28,6 +30,17 @@ function ProtectedRoute({ children, requireAdmin }) {
 
 function App() {
   const [cart, setCart] = useState([]);
+  const [cartItemCount, setCartItemCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item._id === product._id);
@@ -59,7 +72,11 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="app">
-          <Header cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
+          {isMobile ? (
+            <MobileHeader cartItemCount={cartItemCount} />
+          ) : (
+            <Header cartItemCount={cartItemCount} />
+          )}
           <main>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -68,6 +85,11 @@ function App() {
               <Route path="/admin" element={
                 <ProtectedRoute requireAdmin={true}>
                   <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               } />
               <Route path="/" element={

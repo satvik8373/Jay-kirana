@@ -1,14 +1,27 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { AUTH_CONFIG } from '../config';
+import config from '../config';
 
 const AuthContext = createContext();
 
+const ADMIN_EMAIL = 'satvikpatel8373@gmail.com';
+
+// Initialize axios defaults
+axios.defaults.withCredentials = true;
+
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('token');
+  });
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser).email === ADMIN_EMAIL : false;
+  });
 
   // Set up axios interceptor for token
   useEffect(() => {
@@ -16,57 +29,73 @@ export function AuthProvider({ children }) {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
+
     return () => {
       delete axios.defaults.headers.common['Authorization'];
     };
   }, []);
 
+  // Initialize auth state from localStorage and verify with server
   useEffect(() => {
-    const initializeAuth = async () => {
+    const verifyAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await axios.get('/api/user/me');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+          const response = await axios.get(`${config.apiUrl}/user/me`);
           setUser(response.data);
           setIsAuthenticated(true);
-          setIsAdmin(response.data.email === AUTH_CONFIG.ADMIN_EMAIL);
+          setIsAdmin(response.data.email === ADMIN_EMAIL);
+        localStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
           console.error('Error verifying token:', error);
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
-          setIsAdmin(false);
+        if (error.response?.status === 401) {
+          handleLogout();
         }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    initializeAuth();
+    verifyAuth();
   }, []);
 
-  const login = (userData) => {
-    const { token, user } = userData;
-    setIsAuthenticated(true);
-    setUser(user);
-    setIsAdmin(user.email === AUTH_CONFIG.ADMIN_EMAIL);
-    localStorage.setItem('token', token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  const handleLogin = async (userData) => {
+      const { token, user } = userData;
+      
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      setIsAuthenticated(true);
+      setUser(user);
+      setIsAdmin(user.email === ADMIN_EMAIL);
   };
 
-  const logout = () => {
+  const handleLogout = () => {
+      delete axios.defaults.headers.common['Authorization'];
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
     setIsAuthenticated(false);
     setUser(null);
     setIsAdmin(false);
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const contextValue = {
+      isAuthenticated, 
+      user, 
+      isAdmin, 
+    loading,
+    login: handleLogin,
+    logout: handleLogout
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, isAdmin, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

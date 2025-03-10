@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
 node_modules
 dist
 dist-ssr
@@ -24,17 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment files
+# misc
 .env
-.env.*
-!.env.example
-
-# Testing
-coverage
-
-# Production build
-build
-
-# Misc
-*.pem
-.vercel
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

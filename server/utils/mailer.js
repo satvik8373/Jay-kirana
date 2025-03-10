@@ -1,25 +1,34 @@
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
 
-// Create a transporter object using Ethereal SMTP
+// Create a transporter object using Gmail SMTP
 const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  secure: false, // true for port 465, false for other ports
+  service: 'gmail',
   auth: {
-    user: "maddison53@ethereal.email", // Your Ethereal email
-    pass: "jn7jnAPss4f63QBp6D", // Your Ethereal password
-  },
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
+// Configure default email options
+const defaultMailOptions = {
+  from: '"JAY KIRANA STORE" <' + process.env.EMAIL_USER + '>',
+};
+
 // Function to send reset email
-export const sendResetEmail = async (to, resetLink) => {
+const sendResetEmail = async (to, resetLink) => {
   const mailOptions = {
-    from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>', // Sender address
-    to, // List of recipients
-    subject: 'Password Reset Request', // Subject line
-    text: `You requested a password reset. Click the link to reset your password: ${resetLink}`, // Plain text body
-    html: `<p>You requested a password reset. Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`, // HTML body
+    ...defaultMailOptions,
+    to,
+    subject: 'Password Reset Request',
+    text: `You requested a password reset. Click the link to reset your password: ${resetLink}`,
+    html: `<p>You requested a password reset. Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
   };
 
   return transporter.sendMail(mailOptions);
+};
+
+module.exports = {
+  transporter,
+  defaultMailOptions,
+  sendResetEmail
 }; 

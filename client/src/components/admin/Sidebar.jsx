@@ -1,314 +1,133 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { FaBox, FaPlus, FaShoppingCart, FaEnvelope } from 'react-icons/fa';
 
 function Sidebar({ activeSection, setActiveSection }) {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const menuItems = [
-    { id: 'orders', label: 'All Orders', icon: '📋' },
-    { id: 'add-product', label: 'Add Product', icon: '➕' },
-    { id: 'manage-products', label: 'Manage Products', icon: '📦' },
-
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: FaShoppingCart
+    },
+    {
+      id: 'add-product',
+      label: 'Add Product',
+      icon: FaPlus
+    },
+    {
+      id: 'manage-products',
+      label: 'Manage Products',
+      icon: FaBox
+    },
+    {
+      id: 'email-marketing',
+      label: 'Email Marketing',
+      icon: FaEnvelope
+    }
   ];
 
   return (
-    <div className="admin-sidebar">
-      <div className="sidebar-content">
-        <div className="logo-section">
-          <div className="logo-container">
-            <i className="fas fa-store"></i>
-          </div>
-          <h2>Jay Kirana</h2>
-        </div>
-        <nav>
-          {menuItems.map(item => (
-            <button
-              key={item.id}
-              className={`nav-button ${activeSection === item.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(item.id)}
-            >
-              <div className="button-content">
-                <span className="icon">{item.icon}</span>
-                <span className="nav-text">{item.label}</span>
-              </div>
-              <div className="hover-indicator"></div>
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <button className="logout-button" onClick={handleLogout}>
-            <i className="fas fa-power-off"></i>
-            <span>Logout</span>
-          </button>
-        </div>
+    <div className="sidebar">
+      <div className="logo">
+        <h2>Admin Panel</h2>
       </div>
+      <nav>
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(item.id)}
+          >
+            {item.icon && <item.icon />} {item.label}
+          </button>
+        ))}
+      </nav>
 
       <style jsx>{`
-        :root {
-          --primary-color: #1a237e;
-          --secondary-color: #283593;
-          --accent-color: #90caf9;
-          --highlight-color: #1976d2;
-          --text-color: #ffffff;
-          --text-muted: #e3f2fd;
-          --hover-color: rgba(25, 118, 210, 0.1);
-          --transition-speed: 0.3s;
-        }
-
-        .admin-sidebar {
-          width: 250px;
-          background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-          color: var(--text-color);
+        .sidebar {
           position: fixed;
           top: 0;
           left: 0;
-          bottom: 0;
+          width: 250px;
           height: 100vh;
-          overflow-y: auto;
-          z-index: 100;
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .sidebar-content {
+          background-color: #1a237e;
+          color: white;
           padding: 20px;
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          gap: 30px;
-          min-height: min-content;
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
         }
 
-        .logo-section {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 10px 0;
+        .logo {
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .logo-container {
-          width: 40px;
-          height: 40px;
-          background: var(--accent-color);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.5rem;
-          color: var(--primary-color);
-          transform: rotate(-10deg);
-          transition: transform var(--transition-speed);
-          box-shadow: 0 0 20px rgba(144, 202, 249, 0.3);
-        }
-
-        .logo-section:hover .logo-container {
-          transform: rotate(0deg);
-        }
-
-        .logo-section h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
+        .logo h2 {
           margin: 0;
-          color: var(--text-color);
-          text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+          font-size: 1.5rem;
+          font-weight: 600;
         }
 
-        .admin-sidebar nav {
+        nav {
           display: flex;
           flex-direction: column;
           gap: 10px;
-          flex-grow: 1;
         }
 
-        .nav-button {
-          position: relative;
-          background: none;
-          border: none;
-          width: 100%;
-          padding: 12px 15px;
-          text-align: left;
-          font-size: 1rem;
-          cursor: pointer;
-          border-radius: 12px;
-          overflow: hidden;
-          transition: all var(--transition-speed);
-        }
-
-        .button-content {
-          position: relative;
-          z-index: 2;
+        .nav-item {
           display: flex;
           align-items: center;
-          gap: 12px;
-        }
-
-        .nav-text {
-          color: var(--text-muted);
-          font-weight: 500;
-          letter-spacing: 0.5px;
-          text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-        }
-
-        .hover-indicator {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: var(--hover-color);
-          transform: translateX(-100%);
-          transition: transform var(--transition-speed);
-        }
-
-        .nav-button:hover .hover-indicator {
-          transform: translateX(0);
-        }
-
-        .nav-button .icon {
-          width: 20px;
-          text-align: center;
-          font-size: 1.2rem;
-          transition: transform var(--transition-speed);
-          color: var(--accent-color);
-        }
-
-        .nav-button:hover .icon {
-          transform: scale(1.2);
-          color: var(--highlight-color);
-        }
-
-        .nav-button:hover .nav-text {
-          color: var(--accent-color);
-        }
-
-        .nav-button.active {
-          background: var(--hover-color);
-        }
-
-        .nav-button.active .nav-text {
-          color: var(--accent-color);
-          font-weight: 600;
-          text-shadow: 0 0 10px rgba(144, 202, 249, 0.3);
-        }
-
-        .nav-button.active .icon {
-          transform: scale(1.2);
-          color: var(--highlight-color);
-        }
-
-        .sidebar-footer {
-          margin-top: auto;
-          padding: 20px 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          position: sticky;
-          bottom: 0;
-          background: inherit;
-          width: 100%;
-        }
-
-        .logout-button {
-          width: 100%;
-          background: rgba(244, 67, 54, 0.1);
-          color: #ff3b30;
-          border: none;
-          padding: 12px;
-          border-radius: 12px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           gap: 10px;
+          padding: 12px 20px;
+          border: none;
+          background: none;
+          color: white;
           font-size: 1rem;
-          transition: all var(--transition-speed);
-          position: relative;
-          overflow: hidden;
-          font-weight: 600;
-        }
-
-        .logout-button::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.3s ease;
           width: 100%;
-          height: 100%;
-          background: linear-gradient(45deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.2));
-          transform: translateX(-100%);
-          transition: transform var(--transition-speed);
+          text-align: left;
         }
 
-        .logout-button:hover {
-          color: #ff3b30;
-          text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        .nav-item:hover {
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .logout-button:hover::before {
-          transform: translateX(0);
-        }
-
-        .logout-button i, .logout-button span {
-          position: relative;
-          z-index: 1;
+        .nav-item.active {
+          background-color: rgba(255, 255, 255, 0.2);
+          font-weight: 600;
         }
 
         @media (max-width: 768px) {
-          .admin-sidebar {
-            position: fixed;
-            top: 0;
+          .sidebar {
+            top: auto;
+            bottom: 0;
             width: 100%;
             height: auto;
-            max-height: 100vh;
-            overflow-y: auto;
+            padding: 10px;
           }
 
-          .sidebar-content {
-            height: auto;
-            min-height: auto;
-          }
-
-          .logo-section {
+          .logo {
             display: none;
           }
 
-          .admin-sidebar nav {
+          nav {
             flex-direction: row;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            -webkit-overflow-scrolling: touch;
-            gap: 15px;
+            justify-content: space-around;
           }
 
-          .nav-button {
-            padding: 8px 15px;
-            white-space: nowrap;
-            border-radius: 8px;
+          .nav-item {
+            flex-direction: column;
+            padding: 8px;
+            font-size: 0.8rem;
+            gap: 5px;
+            text-align: center;
           }
 
-          .nav-button.active {
-            transform: none;
+          .nav-item svg {
+            font-size: 1.2rem;
           }
-
-          .sidebar-footer {
-            display: none;
-          }
-        }
-
-        .admin-sidebar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .admin-sidebar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
         }
       `}</style>
     </div>

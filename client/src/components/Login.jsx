@@ -122,7 +122,8 @@ function Login() {
           justify-content: center;
           min-height: 100vh;
           width: 100%;
-          padding: 120px 10px 40px;
+          padding: 40px 10px;
+          margin-top: 60px;
           background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
           position: relative;
           overflow: hidden;
@@ -151,7 +152,7 @@ function Login() {
           transition: all 0.3s ease;
           position: relative;
           z-index: 1;
-          margin: 20px auto;
+          margin: 40px auto;
         }
 
         .wrapper:hover {
@@ -338,13 +339,14 @@ function Login() {
 
         @media (max-width: 480px) {
           .auth-page {
-            padding-top: 100px;
+            padding: 20px 10px;
+            margin-top: 40px;
           }
 
           .wrapper {
             width: 100%;
             padding: 30px 20px;
-            margin: 10px auto;
+            margin: 20px auto;
           }
 
           h2 {

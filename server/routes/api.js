@@ -8,12 +8,32 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { auth } = require('../middleware/auth');
+const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5200',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 router.use(cors({
-  origin: 'http://localhost:5200', // Allow requests from the client
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -28,15 +48,6 @@ if (!JWT_SECRET) {
   console.error('JWT_SECRET is not configured in environment variables');
   process.exit(1);
 }
-
-// Email configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 // Verify email configuration
 transporter.verify((error, success) => {
@@ -90,6 +101,20 @@ router.get('/user/me', verifyToken, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user profile
+router.get('/user/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to fetch profile data' });
   }
 });
 
@@ -710,7 +735,7 @@ router.post('/forgot-password', async (req, res) => {
     try {
       // Send email
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        ...defaultMailOptions,
         to: email,
         subject: 'Password Reset Request',
         html: `
@@ -807,6 +832,435 @@ router.post('/reset-password', async (req, res) => {
       stack: error.stack
     });
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// Configure multer for avatar uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads/avatars');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'avatar-' + uniqueSuffix + ext);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  console.log('Received file:', file);
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/webp') {
+    cb(null, true);
+  } else {
+    console.log('Invalid file type:', file.mimetype);
+    cb(null, false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: fileFilter
+});
+
+// Update user profile
+router.put('/user/profile', auth, async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = req.user;
+
+    // Update only allowed fields
+    const allowedUpdates = ['name', 'phone', 'address', 'city', 'pincode', 'bio', 'social'];
+    const updateData = {};
+    
+    Object.keys(updates).forEach(key => {
+      if (allowedUpdates.includes(key)) {
+        updateData[key] = updates[key];
+      }
+    });
+
+    // Handle social media links
+    if (updates.facebook || updates.twitter || updates.instagram || updates.linkedin) {
+      updateData.social = {
+        facebook: updates.facebook || user.social?.facebook,
+        twitter: updates.twitter || user.social?.twitter,
+        instagram: updates.instagram || user.social?.instagram,
+        linkedin: updates.linkedin || user.social?.linkedin
+      };
+    }
+
+    // Update user in database
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(400).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Upload avatar
+router.post('/user/avatar', auth, upload.single('avatar'), async (req, res) => {
+  try {
+    console.log('Avatar upload request received', {
+      file: req.file,
+      userId: req.user._id
+    });
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Get the old avatar path if it exists
+    const oldAvatarPath = req.user.avatar;
+
+    // Create relative path for database storage
+    const relativePath = path.relative(
+      path.join(__dirname, '..'),
+      req.file.path
+    ).replace(/\\/g, '/');
+
+    console.log('Updating user with new avatar path:', relativePath);
+
+    // Update user with new avatar path
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: relativePath },
+      { new: true }
+    ).select('-password -resetPasswordToken -resetPasswordExpires');
+
+    if (!user) {
+      // Delete uploaded file if user not found
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting uploaded file:', err);
+      });
+      throw new Error('User not found');
+    }
+
+    // Delete old avatar file if it exists
+    if (oldAvatarPath) {
+      const oldPath = path.join(__dirname, '..', oldAvatarPath);
+      fs.unlink(oldPath, (err) => {
+        if (err) console.error('Error deleting old avatar:', err);
+      });
+    }
+
+    console.log('Avatar upload successful', {
+      userId: user._id,
+      avatarPath: relativePath
+    });
+
+    res.json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      avatar: relativePath,
+      user
+    });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    // Delete uploaded file if there was an error
+    if (req.file) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting uploaded file:', err);
+      });
+    }
+    res.status(400).json({ 
+      error: 'Failed to upload avatar',
+      message: error.message
+    });
+  }
+});
+
+// Serve avatar images
+router.get('/user/avatar/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/avatars', filename);
+    
+    console.log('Attempting to serve avatar:', filepath);
+    
+    if (!fs.existsSync(filepath)) {
+      console.log('Avatar file not found:', filepath);
+      return res.status(404).json({ error: 'Avatar not found' });
+    }
+    
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Avatar fetch error:', error);
+    res.status(400).json({ error: 'Failed to fetch avatar' });
+  }
+});
+
+// Configure multer for marketing email images
+const marketingStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads/marketing');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'marketing-' + uniqueSuffix + ext);
+  }
+});
+
+const marketingUpload = multer({
+  storage: marketingStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: fileFilter
+});
+
+// Send marketing emails (admin only)
+router.post('/admin/send-marketing-email', auth, marketingUpload.single('image'), async (req, res) => {
+  try {
+    console.log('Received marketing email request:', req.body);
+
+    // Parse the form data
+    const customerIds = JSON.parse(req.body.customerIds);
+    const subject = req.body.subject;
+    const content = req.body.content;
+    const discountCode = req.body.discountCode;
+    const discountPercentage = req.body.discountPercentage;
+    const products = JSON.parse(req.body.products || '[]');
+    const cardStyle = JSON.parse(req.body.cardStyle);
+
+    // Verify if user is admin
+    if (req.user.email !== process.env.ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Only admin can send marketing emails' });
+    }
+
+    // Validate required fields
+    if (!customerIds || !Array.isArray(customerIds) || customerIds.length === 0) {
+      return res.status(400).json({ error: 'No customers selected' });
+    }
+
+    if (!subject || !content) {
+      return res.status(400).json({ error: 'Subject and content are required' });
+    }
+
+    // Get customer details
+    const customers = await User.find({ _id: { $in: customerIds } });
+    if (!customers.length) {
+      return res.status(404).json({ error: 'No valid customers found' });
+    }
+
+    // Get product details if products are selected
+    let productDetails = [];
+    if (products && products.length > 0) {
+      productDetails = await Product.find({ _id: { $in: products } });
+    }
+
+    // Get the server URL from environment or default
+    const serverUrl = process.env.SERVER_URL || `http://${req.get('host')}`;
+
+    // Create email content with products and discount
+    const createEmailContent = (customer) => {
+      let emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${serverUrl} data: 'unsafe-inline'">
+        </head>
+        <body>
+          <div style="
+            background-color: ${cardStyle.backgroundColor};
+            color: ${cardStyle.textColor};
+            font-family: ${cardStyle.fontFamily};
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: ${cardStyle.alignment};
+          ">
+            <div style="
+              background-color: ${cardStyle.headerColor};
+              padding: 20px;
+              border-radius: 8px 8px 0 0;
+              margin-bottom: 20px;
+            ">
+              <h2 style="color: #ffffff; margin: 0;">${subject}</h2>
+            </div>
+      `;
+
+      // Add header image if uploaded with absolute URL
+      if (req.file) {
+        const imageUrl = `${serverUrl}/uploads/marketing/${req.file.filename}`;
+        emailHtml += `
+          <img src="${imageUrl}" 
+               alt="Header Image" 
+               style="max-width: 100%; height: auto; margin-bottom: 20px; display: block;"
+          />
+        `;
+      }
+
+      // Add main content
+      emailHtml += `
+        <div style="margin-bottom: 20px;">
+          Dear ${customer.name},<br><br>
+          ${content.replace(/\n/g, '<br>')}
+        </div>
+      `;
+
+      // Add featured products
+      if (productDetails.length > 0) {
+        emailHtml += `
+          <div style="margin-top: 20px;">
+            <h3>Featured Products</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+        `;
+
+        productDetails.forEach(product => {
+          emailHtml += `
+            <td style="
+              padding: 10px;
+              border: 1px solid #ddd;
+              text-align: center;
+              width: ${100 / Math.min(productDetails.length, 3)}%;
+            ">
+              <h4 style="margin: 0 0 8px 0;">${product.name}</h4>
+              <p style="margin: 0;">₹${product.price}</p>
+            </td>
+          `;
+        });
+
+        emailHtml += `
+              </tr>
+            </table>
+          </div>
+        `;
+      }
+
+      // Add discount code
+      if (discountCode && discountPercentage) {
+        emailHtml += `
+          <div style="
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+          ">
+            <h3>Special Offer</h3>
+            <p>Use code <strong>${discountCode}</strong> to get ${discountPercentage}% off on your next purchase!</p>
+          </div>
+        `;
+      }
+
+      // Close main container and add footer
+      emailHtml += `
+          <div style="margin-top: 30px; text-align: center; color: #666;">
+            <p>Best regards,<br>Jay Kirana Fresh</p>
+          </div>
+        </div>
+        </body>
+        </html>
+      `;
+
+      return emailHtml;
+    };
+
+    // Send emails to all selected customers
+    const emailPromises = customers.map(customer => {
+      const mailOptions = {
+        ...defaultMailOptions,
+        to: customer.email,
+        subject: subject,
+        html: createEmailContent(customer)
+      };
+
+      return transporter.sendMail(mailOptions);
+    });
+
+    try {
+      // Wait for all emails to be sent
+      await Promise.all(emailPromises);
+
+      // Log the marketing campaign
+      console.log('Marketing emails sent:', {
+        totalCustomers: customers.length,
+        subject,
+        discountCode,
+        products: productDetails.map(p => p.name)
+      });
+
+      res.json({ 
+        message: 'Marketing emails sent successfully',
+        totalSent: customers.length
+      });
+    } catch (emailError) {
+      console.error('Error sending marketing emails:', emailError);
+      throw new Error('Failed to send marketing emails: ' + emailError.message);
+    }
+
+  } catch (error) {
+    console.error('Marketing email error:', error);
+    // Clean up uploaded file if there was an error
+    if (req.file) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Error deleting uploaded file:', err);
+      });
+    }
+    res.status(500).json({ 
+      error: 'Failed to send marketing emails',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Get all users (admin only)
+router.get('/users/all', auth, async (req, res) => {
+  try {
+    // Verify if user is admin
+    if (req.user.email !== process.env.ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Only admin can access user list' });
+    }
+
+    const users = await User.find()
+      .select('name email')  // Only return necessary fields
+      .sort({ name: 1 });    // Sort by name
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Serve marketing images
+router.get('/uploads/marketing/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/marketing', filename);
+    
+    console.log('Attempting to serve marketing image:', filepath);
+    
+    if (!fs.existsSync(filepath)) {
+      console.log('Marketing image file not found:', filepath);
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Marketing image fetch error:', error);
+    res.status(400).json({ error: 'Failed to fetch image' });
   }
 });
 
