@@ -86,11 +86,6 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({ status: 'Server is running' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
@@ -100,7 +95,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const port = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
@@ -108,9 +103,8 @@ const startServer = async () => {
     await connectDB();
     
     // Start server
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${port}`);
-      console.log(`Server URL: http://0.0.0.0:${port}`);
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
