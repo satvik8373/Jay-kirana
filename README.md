@@ -1,191 +1,92 @@
-# Jay Kirana Store
+# Jay Kirana - Online Grocery Store
 
-A full-stack e-commerce application for grocery store management.
-
-## Project Structure
-
-```
-jay-kirana/
-├── client/         # React frontend
-└── server/         # Node.js backend
-```
-
-## Prerequisites
-
-- Node.js 14+ and npm
-- MongoDB Atlas account
-- Gmail account for email notifications
-- Vercel account for deployment
-
-## Environment Variables
-
-### Server (.env)
-
-Create a `.env` file in the server directory with the following variables:
-
-```env
-# MongoDB Connection
-MONGODB_URI=your_mongodb_atlas_uri
-
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-
-# Email Configuration
-EMAIL_USER=your_gmail_address
-EMAIL_PASS=your_gmail_app_specific_password
-
-# Admin Configuration
-ADMIN_EMAIL=your_admin_email
-
-# Client URL
-CLIENT_URL=https://your-frontend-domain.vercel.app
-
-# Server URL (for production)
-SERVER_URL=https://your-backend-domain.vercel.app
-```
-
-### Client (.env)
-
-Create a `.env` file in the client directory:
-
-```env
-REACT_APP_API_URL=https://your-backend-domain.vercel.app
-```
-
-## Local Development Setup
-
-### Server Setup
-
-1. Navigate to the server directory:
-   ```bash
-   cd server
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create necessary directories:
-   ```bash
-   mkdir uploads
-   mkdir uploads/avatars
-   mkdir uploads/marketing
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Client Setup
-
-1. Navigate to the client directory:
-   ```bash
-   cd client
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-## Deployment
-
-### Backend Deployment (Vercel)
-
-1. Install Vercel CLI:
-   ```bash
-   npm i -g vercel
-   ```
-
-2. Create a `vercel.json` file in the server directory:
-   ```json
-   {
-     "version": 2,
-     "builds": [
-       {
-         "src": "index.js",
-         "use": "@vercel/node"
-       }
-     ],
-     "routes": [
-       {
-         "src": "/(.*)",
-         "dest": "index.js"
-       }
-     ]
-   }
-   ```
-
-3. Configure environment variables in Vercel:
-   - Go to your project settings in Vercel
-   - Add all the environment variables from your `.env` file
-
-4. Deploy the server:
-   ```bash
-   cd server
-   vercel
-   ```
-
-### Frontend Deployment (Vercel)
-
-1. Update the environment variables in the client's `.env` file with your production backend URL
-
-2. Build the project:
-   ```bash
-   cd client
-   npm run build
-   ```
-
-3. Deploy to Vercel:
-   ```bash
-   vercel
-   ```
-
-## File Storage in Production
-
-For production, consider using cloud storage solutions like:
-- AWS S3
-- Cloudinary
-- Firebase Storage
-
-This is because Vercel's serverless functions are stateless and don't persist files.
-
-## Important Notes
-
-1. Make sure to update CORS settings with your production domain
-2. Use environment variables for all configuration
-3. Set up proper security headers
-4. Enable proper MongoDB Atlas network access
-5. Configure Gmail with App-Specific Password for email functionality
+A modern e-commerce platform for grocery shopping built with React.js and Node.js.
 
 ## Features
 
 - User authentication and authorization
-- Product management
-- Order processing
-- Email notifications
-- Marketing email campaigns
-- User profile management
-- Admin dashboard
+- Admin dashboard for product management
+- Shopping cart functionality
+- Order management
 - Responsive design
+- Real-time product search
+- Category-based product filtering
 
 ## Tech Stack
 
 - Frontend: React.js
-- Backend: Node.js with Express
+- Backend: Node.js, Express.js
 - Database: MongoDB
 - Authentication: JWT
-- Email: Nodemailer with Gmail
-- File Upload: Multer
-- Deployment: Vercel
+- Styling: CSS-in-JS
+- Icons: React Icons
+- State Management: Context API
 
-## Support
+## Getting Started
 
-For any issues or questions, please contact the development team.
+### Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+- MongoDB
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/satvik-8373/jay-kirana.git
+cd jay-kirana
+```
+
+2. Install dependencies:
+```bash
+# Install backend dependencies
+cd server
+npm install
+
+# Install frontend dependencies
+cd ../client
+npm install
+```
+
+3. Create environment variables:
+Create a `.env` file in the server directory with:
+```
+MONGODB_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+PORT=5000
+```
+
+4. Start the development servers:
+```bash
+# Start backend server
+cd server
+npm run dev
+
+# Start frontend server (in a new terminal)
+cd client
+npm start
+```
+
+The application will be available at `http://localhost:3000`
+
+## Deployment
+
+The application can be deployed on any hosting platform of your choice. The frontend and backend should be deployed separately.
+
+For development:
+1. Frontend runs on `http://localhost:5173` or `http://localhost:3000`
+2. Backend runs on `http://localhost:5000`
+
+For production:
+1. Deploy the frontend to your preferred static hosting service
+2. Deploy the backend to your preferred Node.js hosting service
+3. Update the CORS configuration in `server/index.js` with your production URLs
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/) # Jay-Kirana

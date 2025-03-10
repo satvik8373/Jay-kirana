@@ -17,7 +17,7 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5200', // Allow requests from the client
+  origin: 'http://localhost:5200', // Allow requests from the client
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -1051,46 +1051,35 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
       productDetails = await Product.find({ _id: { $in: products } });
     }
 
-    // Get the server URL from environment or default
-    const serverUrl = process.env.SERVER_URL || `http://${req.get('host')}`;
-
     // Create email content with products and discount
     const createEmailContent = (customer) => {
       let emailHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="Content-Security-Policy" content="default-src 'self' ${serverUrl} data: 'unsafe-inline'">
-        </head>
-        <body>
+        <div style="
+          background-color: ${cardStyle.backgroundColor};
+          color: ${cardStyle.textColor};
+          font-family: ${cardStyle.fontFamily};
+          padding: 20px;
+          max-width: 600px;
+          margin: 0 auto;
+          text-align: ${cardStyle.alignment};
+        ">
           <div style="
-            background-color: ${cardStyle.backgroundColor};
-            color: ${cardStyle.textColor};
-            font-family: ${cardStyle.fontFamily};
+            background-color: ${cardStyle.headerColor};
             padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: ${cardStyle.alignment};
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 20px;
           ">
-            <div style="
-              background-color: ${cardStyle.headerColor};
-              padding: 20px;
-              border-radius: 8px 8px 0 0;
-              margin-bottom: 20px;
-            ">
-              <h2 style="color: #ffffff; margin: 0;">${subject}</h2>
-            </div>
+            <h2 style="color: #ffffff; margin: 0;">${subject}</h2>
+          </div>
       `;
 
-      // Add header image if uploaded with absolute URL
+      // Add header image if uploaded
       if (req.file) {
-        const imageUrl = `${serverUrl}/uploads/marketing/${req.file.filename}`;
+        const imageUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/uploads/marketing/${req.file.filename}`;
         emailHtml += `
           <img src="${imageUrl}" 
                alt="Header Image" 
-               style="max-width: 100%; height: auto; margin-bottom: 20px; display: block;"
+               style="max-width: 100%; height: auto; margin-bottom: 20px;"
           />
         `;
       }
@@ -1108,27 +1097,29 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
         emailHtml += `
           <div style="margin-top: 20px;">
             <h3>Featured Products</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
+            <div style="
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+              gap: 16px;
+            ">
         `;
 
         productDetails.forEach(product => {
           emailHtml += `
-            <td style="
+            <div style="
               padding: 10px;
               border: 1px solid #ddd;
+              border-radius: 4px;
               text-align: center;
-              width: ${100 / Math.min(productDetails.length, 3)}%;
             ">
               <h4 style="margin: 0 0 8px 0;">${product.name}</h4>
               <p style="margin: 0;">₹${product.price}</p>
-            </td>
+            </div>
           `;
         });
 
         emailHtml += `
-              </tr>
-            </table>
+            </div>
           </div>
         `;
       }
@@ -1148,14 +1139,12 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
         `;
       }
 
-      // Close main container and add footer
+      // Close main container
       emailHtml += `
           <div style="margin-top: 30px; text-align: center; color: #666;">
             <p>Best regards,<br>Jay Kirana Fresh</p>
           </div>
         </div>
-        </body>
-        </html>
       `;
 
       return emailHtml;
