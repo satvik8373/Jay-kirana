@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
 require('dotenv').config();
 
 const connectDB = async () => {
@@ -9,11 +10,26 @@ const connectDB = async () => {
     }
 
     console.log('Attempting to connect to MongoDB...');
+    
+    // Extract hostname from URI for DNS check
+    const mongoURL = new URL(uri);
+    const hostname = mongoURL.hostname;
+    
+    console.log('Checking DNS resolution for MongoDB host...');
+    try {
+      await dns.promises.lookup(hostname);
+      console.log('DNS resolution successful');
+    } catch (dnsError) {
+      console.error('DNS resolution failed:', dnsError);
+      throw new Error(`DNS resolution failed for ${hostname}`);
+    }
+
     console.log('Connection string format check:', uri.startsWith('mongodb+srv://') ? 'Valid prefix' : 'Invalid prefix');
     
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s
       socketTimeoutMS: 45000, // Close sockets after 45s
+      family: 4 // Force IPv4
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -44,7 +60,8 @@ const connectDB = async () => {
     console.error('MongoDB Connection Error Details:', {
       name: error.name,
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      uri: uri ? uri.replace(/:[^:/@]+@/, ':****@') : 'undefined' // Hide password in logs
     });
 
     if (error.name === 'MongoParseError') {
