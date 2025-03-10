@@ -8,11 +8,8 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
-    const conn = await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-
+    console.log('Attempting to connect to MongoDB...');
+    const conn = await mongoose.connect(uri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     // Add connection error handler
@@ -35,6 +32,13 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);
+    // Log more details about the connection error
+    if (error.name === 'MongoParseError') {
+      console.error('Invalid MongoDB connection string');
+    }
+    if (error.name === 'MongoNetworkError') {
+      console.error('MongoDB network error - check if the connection string is correct and the database is accessible');
+    }
     process.exit(1);
   }
 };
