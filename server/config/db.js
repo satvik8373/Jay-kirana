@@ -9,12 +9,22 @@ const connectDB = async () => {
     }
 
     console.log('Attempting to connect to MongoDB...');
-    const conn = await mongoose.connect(uri);
+    console.log('Connection string format check:', uri.startsWith('mongodb+srv://') ? 'Valid prefix' : 'Invalid prefix');
+    
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s
+    });
+
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     // Add connection error handler
     mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
+      console.error('MongoDB connection error:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
     });
 
     // Add disconnection handler
@@ -31,14 +41,20 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    // Log more details about the connection error
+    console.error('MongoDB Connection Error Details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+
     if (error.name === 'MongoParseError') {
-      console.error('Invalid MongoDB connection string');
-    }
-    if (error.name === 'MongoNetworkError') {
+      console.error('Invalid MongoDB connection string format');
+    } else if (error.name === 'MongoNetworkError') {
       console.error('MongoDB network error - check if the connection string is correct and the database is accessible');
+    } else if (error.name === 'MongoServerSelectionError') {
+      console.error('Could not connect to any MongoDB server - check if the cluster is running and accessible');
     }
+
     process.exit(1);
   }
 };
