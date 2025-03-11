@@ -91,16 +91,12 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  res.status(500).json({ 
-    error: 'Server error',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
 const startServer = async () => {
   try {
@@ -108,10 +104,20 @@ const startServer = async () => {
     await connectDB();
     
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
       console.log('MongoDB URI:', process.env.MONGODB_URI ? '**URI Set**' : 'Missing MONGODB_URI');
     });
+
+    // Handle server errors
+    server.on('error', (error) => {
+      console.error('Server error:', error);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use`);
+        process.exit(1);
+      }
+    });
+
   } catch (error) {
     console.error('Failed to start server:', error);
     // Don't exit immediately in production, try to reconnect
@@ -124,4 +130,5 @@ const startServer = async () => {
   }
 };
 
+// Start the server
 startServer(); 

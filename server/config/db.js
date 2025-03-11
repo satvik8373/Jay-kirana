@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
 const connectDB = async () => {
@@ -35,23 +34,23 @@ const connectDB = async () => {
       throw new Error(`Invalid MongoDB URI format: ${urlError.message}`);
     }
 
-    // Configure Mongoose options
+    // Configure connection options
     const options = {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      }
+      serverSelectionTimeoutMS: 60000, // Increase timeout to 60 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45s
+      family: 4, // Use IPv4, skip trying IPv6
+      retryWrites: true,
+      w: 'majority',
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      minPoolSize: 0,
+      maxIdleTimeMS: 10000,
+      useNewUrlParser: true,
+      useUnifiedTopology: true
     };
 
     console.log('Connecting to MongoDB...');
-    
-    // Create connection
     const conn = await mongoose.connect(cleanUri, options);
-
-    // Verify connection with a ping
-    await conn.connection.db.admin().command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
@@ -82,6 +81,8 @@ const connectDB = async () => {
       console.error('MongoDB authentication failed. Please check your username and password.');
     } else if (error.message.includes('Invalid MongoDB URI format')) {
       console.error('Please check your MongoDB connection string format.');
+    } else if (error.message.includes('Server selection timed out')) {
+      console.error('MongoDB server selection timed out. This might be due to network issues or firewall settings.');
     }
     throw error;
   }
