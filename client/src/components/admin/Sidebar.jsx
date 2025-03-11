@@ -2,9 +2,9 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaBox, FaPlus, FaShoppingBag, FaEnvelope } from 'react-icons/fa';
 
-function Sidebar({ activeSection, setActiveSection }) {
+function Sidebar() {
   const location = useLocation();
-  const currentPath = location.pathname.split('/')[2] || 'orders';
+  const currentPath = location.pathname.split('/').pop();
 
   const menuItems = [
     { id: 'orders', icon: FaShoppingBag, label: 'Orders', path: '/admin/orders' },
@@ -21,12 +21,14 @@ function Sidebar({ activeSection, setActiveSection }) {
       <nav className="sidebar-nav">
         {menuItems.map(item => {
           const Icon = item.icon;
+          const isActive = currentPath === item.id || 
+            (currentPath === '' && item.id === 'orders');
+          
           return (
             <Link
               key={item.id}
               to={item.path}
-              className={`nav-item ${currentPath === item.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(item.id)}
+              className={`nav-item ${isActive ? 'active' : ''}`}
             >
               <Icon className="nav-icon" />
               <span>{item.label}</span>
@@ -98,6 +100,7 @@ function Sidebar({ activeSection, setActiveSection }) {
             bottom: 0;
             top: auto;
             padding-top: 0;
+            background: white;
           }
 
           .sidebar-header {

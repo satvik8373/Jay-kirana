@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
@@ -8,10 +8,10 @@ import Sidebar from '../components/admin/Sidebar';
 import EmailMarketing from '../components/EmailMarketing';
 
 function Admin() {
-  const [activeSection, setActiveSection] = useState('orders');
   const [error, setError] = useState(null);
   const { isAdmin, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAccess = () => {
@@ -19,7 +19,7 @@ function Admin() {
         if (!isAuthenticated) {
           navigate('/login', { 
             state: { 
-              from: '/admin',
+              from: location.pathname,
               message: 'Please log in to access the admin panel' 
             } 
           });
@@ -39,13 +39,14 @@ function Admin() {
     };
 
     checkAccess();
-  }, [isAdmin, isAuthenticated, loading, navigate]);
+  }, [isAdmin, isAuthenticated, loading, navigate, location]);
 
   if (error) {
     return (
       <div className="error-container">
         <h2>Error</h2>
         <p>{error}</p>
+        <button onClick={() => navigate('/')}>Return to Home</button>
       </div>
     );
   }
@@ -64,15 +65,15 @@ function Admin() {
 
   return (
     <div className="admin">
-      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+      <Sidebar />
       <div className="admin-content">
         <Routes>
-          <Route path="/" element={<Navigate to="/admin/orders" replace />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/add-product" element={<AddProduct />} />
-          <Route path="/manage-products" element={<ManageProducts />} />
-          <Route path="/email-marketing" element={<EmailMarketing />} />
-          <Route path="*" element={<Navigate to="/admin/orders" replace />} />
+          <Route index element={<Navigate to="orders" replace />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="manage-products" element={<ManageProducts />} />
+          <Route path="email-marketing" element={<EmailMarketing />} />
+          <Route path="*" element={<Navigate to="orders" replace />} />
         </Routes>
       </div>
 
@@ -96,11 +97,22 @@ function Admin() {
           background-color: #ffebee;
           border-radius: 8px;
           margin: 20px;
+          text-align: center;
         }
 
         .error-container h2 {
           color: #c62828;
           margin-bottom: 10px;
+        }
+
+        .error-container button {
+          margin-top: 15px;
+          padding: 10px 20px;
+          background: #1a237e;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
         }
 
         .loading-container {

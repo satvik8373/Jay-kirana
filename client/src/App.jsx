@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import MobileHeader from './components/MobileHeader';
@@ -88,6 +88,53 @@ function ProtectedRoute({ children, requireAdmin }) {
   return children;
 }
 
+// Error Boundary Component
+const ErrorBoundary = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('Caught error:', error);
+      setError(error);
+      setHasError(true);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="error-boundary">
+        <h2>Something went wrong</h2>
+        <p>{error?.message || 'An unexpected error occurred'}</p>
+        <button onClick={() => window.location.reload()}>Reload Page</button>
+        <style jsx>{`
+          .error-boundary {
+            padding: 20px;
+            margin: 20px;
+            background: #ffebee;
+            border-radius: 8px;
+            text-align: center;
+          }
+          button {
+            padding: 10px 20px;
+            background: #1a237e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 function App() {
   const [cart, setCart] = useState([]);
   const [cartItemCount, setCartItemCount] = useState(0);
@@ -131,56 +178,77 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="app">
-          {isMobile ? (
-            <MobileHeader cartItemCount={cartItemCount} />
-          ) : (
-            <Header cartItemCount={cartItemCount} />
-          )}
-          <main>
-            <Routes>
-              <Route path="/" element={<Home addToCart={addToCart} />} />
-              <Route 
-                path="/admin/*" 
-                element={
-                  <ProtectedRoute requireAdmin={true}>
-                    <Admin />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/cart" element={
-                <ProtectedRoute>
-                  <Cart 
-                    cart={cart}
-                    removeFromCart={removeFromCart}
-                    updateQuantity={updateQuantity}
+        <ErrorBoundary>
+          <div className="app">
+            {isMobile ? (
+              <MobileHeader cartItemCount={cartItemCount} />
+            ) : (
+              <Header cartItemCount={cartItemCount} />
+            )}
+            <main>
+              <Suspense fallback={
+                <div className="loading">
+                  <p>Loading...</p>
+                  <style jsx>{`
+                    .loading {
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      height: 100vh;
+                      font-size: 1.2rem;
+                      color: #1a237e;
+                    }
+                  `}</style>
+                </div>
+              }>
+                <Routes>
+                  <Route path="/" element={<Home addToCart={addToCart} />} />
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <ProtectedRoute requireAdmin={true}>
+                        <Admin />
+                      </ProtectedRoute>
+                    } 
                   />
-                </ProtectedRoute>
-              } />
-              <Route 
-                path="/checkout" 
-                element={
-                  <ProtectedRoute>
-                    <Checkout cart={cart} onCheckout={clearCart} />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/cart" 
+                    element={
+                      <ProtectedRoute>
+                        <Cart 
+                          cart={cart}
+                          removeFromCart={removeFromCart}
+                          updateQuantity={updateQuantity}
+                        />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/checkout" 
+                    element={
+                      <ProtectedRoute>
+                        <Checkout cart={cart} onCheckout={clearCart} />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </main>
+            <Footer />
+          </div>
+        </ErrorBoundary>
       </Router>
     </AuthProvider>
   );
