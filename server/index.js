@@ -111,6 +111,9 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
 // Root route for health check
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
@@ -120,36 +123,23 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV,
-    cors: {
-      allowedOrigins: corsOptions.origin,
-      credentials: corsOptions.credentials
-    }
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
-// Handle 404 errors for API routes
-app.use('/api/*', (req, res) => {
-  console.log('API 404:', req.originalUrl);
-  res.status(404).json({ 
-    error: 'Not Found',
-    path: req.originalUrl,
-    method: req.method
-  });
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/') {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    path: req.path,
-    method: req.method
-  });
-  res.status(err.status || 500).json({ 
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
-  });
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Get port from environment and store in Express

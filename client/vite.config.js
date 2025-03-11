@@ -4,17 +4,17 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ command, mode }) => {
   // Load env file based on mode
   const env = loadEnv(mode, process.cwd(), '');
-  const apiUrl = mode === 'production' 
-    ? 'https://jay-kirana-api.onrender.com'
-    : 'http://localhost:5000';
-
+  
   return {
     plugins: [react()],
+    base: '/',
     server: {
       port: 5200,
       proxy: {
         '/api': {
-          target: apiUrl,
+          target: mode === 'production'
+            ? 'https://jay-kirana-api.onrender.com'
+            : 'http://localhost:5000',
           changeOrigin: true,
           secure: mode === 'production',
           rewrite: (path) => path.replace(/^\/api/, '')
@@ -36,13 +36,12 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     define: {
-      __API_URL__: JSON.stringify(apiUrl),
+      __API_URL__: JSON.stringify(
+        mode === 'production'
+          ? 'https://jay-kirana-api.onrender.com'
+          : 'http://localhost:5000'
+      ),
       __MODE__: JSON.stringify(mode)
-    },
-    base: '/',
-    // Remove preview configuration as we're using static deployment
-    optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom']
     }
   };
 });
