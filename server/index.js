@@ -112,33 +112,28 @@ app.use((err, req, res, next) => {
 });
 
 // Get port from environment and store in Express
-const PORT = process.env.PORT || 10000;
-app.set('port', PORT);
+const PORT = process.env.PORT || 3000;
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 10000; // 10 seconds
-
-const startServer = async (retryCount = 0) => {
+const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
     
     // Create HTTP server
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log('Environment:', process.env.NODE_ENV);
     });
 
-  } catch (error) {
-    console.error(`Failed to start server (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
-    
-    if (process.env.NODE_ENV === 'production' && retryCount < MAX_RETRIES) {
-      console.log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
-      setTimeout(() => startServer(retryCount + 1), RETRY_DELAY);
-    } else {
-      console.error('Max retries reached or not in production. Exiting.');
+    // Handle server errors
+    server.on('error', (error) => {
+      console.error('Server error:', error);
       process.exit(1);
-    }
+    });
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
   }
 };
 
