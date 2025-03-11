@@ -17,10 +17,31 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: 'http://localhost:5200', // Allow requests from the client
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      // Development URLs
+      'http://localhost:5200',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      // Production URLs
+      'https://jay-kirana.onrender.com',
+      'https://jay-kirana-api.onrender.com'
+    ];
+    
+    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('Blocked by CORS in API routes:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Load environment variables
@@ -1260,6 +1281,22 @@ router.get('/test', (req, res) => {
     message: 'API is working',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
+  });
+});
+
+// Debug endpoint for CORS
+router.get('/debug/cors', (req, res) => {
+  res.json({
+    message: 'CORS debug info',
+    origin: req.headers.origin,
+    environment: process.env.NODE_ENV,
+    headers: {
+      'access-control-allow-origin': res.getHeader('Access-Control-Allow-Origin'),
+      'access-control-allow-credentials': res.getHeader('Access-Control-Allow-Credentials'),
+      'access-control-allow-methods': res.getHeader('Access-Control-Allow-Methods'),
+      'access-control-allow-headers': res.getHeader('Access-Control-Allow-Headers')
+    },
+    timestamp: new Date().toISOString()
   });
 });
 

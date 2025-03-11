@@ -19,9 +19,6 @@ const corsOptions = {
       'http://localhost:5200',
       'http://localhost:3000',
       'http://localhost:5173',
-      'http://127.0.0.1:5200',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
       // Production URLs
       'https://jay-kirana.onrender.com',
       'https://jay-kirana-api.onrender.com'
@@ -29,13 +26,9 @@ const corsOptions = {
     
     // Log the request origin
     console.log('Request origin:', origin);
+    console.log('Current environment:', process.env.NODE_ENV);
     
-    if (process.env.NODE_ENV === 'development') {
-      callback(null, true);
-      return;
-    }
-    
-    if (allowedOrigins.includes(origin)) {
+    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn('Blocked by CORS:', origin);
@@ -64,7 +57,7 @@ app.use((req, res, next) => {
     env: process.env.NODE_ENV
   });
 
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || !origin) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else {
     const allowedOrigins = [
