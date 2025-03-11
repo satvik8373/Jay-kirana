@@ -112,7 +112,7 @@ app.use((err, req, res, next) => {
 });
 
 // Get port from environment and store in Express
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 const startServer = async () => {
   try {
@@ -120,15 +120,44 @@ const startServer = async () => {
     await connectDB();
     
     // Create HTTP server
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
       console.log('Environment:', process.env.NODE_ENV);
+      console.log(`Health check available at: http://localhost:${PORT}/health`);
     });
 
     // Handle server errors
     server.on('error', (error) => {
-      console.error('Server error:', error);
-      process.exit(1);
+      if (error.syscall !== 'listen') {
+        console.error('Server error:', error);
+        process.exit(1);
+      }
+
+      switch (error.code) {
+        case 'EACCES':
+          console.error(`Port ${PORT} requires elevated privileges`);
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          console.error(`Port ${PORT} is already in use`);
+          process.exit(1);
+          break;
+        default:
+          console.error('Server error:', error);
+          process.exit(1);
+      }
+    });
+
+    // Handle process termination
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        mongoose.connection.close(false, () => {
+          console.log('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
     });
 
   } catch (error) {
