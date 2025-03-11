@@ -4,13 +4,13 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: './',
   server: {
     port: 5200,
     proxy: {
       '/api': {
         target: process.env.NODE_ENV === 'production'
-          ? 'https://jay-kirana-api.onrender.com'
+          ? 'https://jay-kirana.onrender.com'
           : 'http://localhost:5000',
         changeOrigin: true,
         secure: true,
@@ -20,7 +20,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
+    assetsDir: '',
     emptyOutDir: true,
     sourcemap: false,
     rollupOptions: {
@@ -28,13 +28,9 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html')
       },
       output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]',
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['react-icons', 'framer-motion']
-        }
+        entryFileNames: '[name].[hash].js',
+        chunkFileNames: '[name].[hash].js',
+        assetFileNames: '[name].[hash].[ext]'
       }
     }
   },

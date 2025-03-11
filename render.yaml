@@ -1,7 +1,7 @@
 services:
   # Backend API service
   - type: web
-    name: jay-kirana-backend
+    name: jay-kirana
     env: node
     buildCommand: cd server && npm install
     startCommand: cd server && node index.js
@@ -22,11 +22,11 @@ services:
       - key: ADMIN_EMAIL
         sync: false
       - key: CLIENT_URL
-        value: https://jay-kirana-frontend.onrender.com
+        value: https://jay-kirana.onrender.com
 
   # Frontend static site
   - type: static
-    name: jay-kirana-frontend
+    name: jay-kirana
     env: static
     buildCommand: |
       cd client
@@ -34,53 +34,39 @@ services:
       npm run build
     publishDir: client/dist
     routes:
-      # Serve static assets directly
-      - type: rewrite
-        source: /assets/*
-        destination: /assets/*
-      # Handle client-side routing
       - type: rewrite
         source: /*
         destination: /index.html
     headers:
-      # Default headers
       - path: /*
         headers:
           - name: Cache-Control
             value: no-store
           - name: X-Content-Type-Options
             value: nosniff
-      # JavaScript files
-      - path: /assets/*.js
+      - path: /*.js
         headers:
           - name: Content-Type
             value: application/javascript; charset=utf-8
           - name: Cache-Control
             value: public, max-age=31536000, immutable
-      # CSS files
-      - path: /assets/*.css
+      - path: /*.css
         headers:
           - name: Content-Type
             value: text/css; charset=utf-8
           - name: Cache-Control
             value: public, max-age=31536000, immutable
-      # HTML files
       - path: /*.html
         headers:
           - name: Content-Type
             value: text/html; charset=utf-8
           - name: Cache-Control
             value: no-cache
-      # JSON files
-      - path: /*.json
-        headers:
-          - name: Content-Type
-            value: application/json; charset=utf-8
     staticPublishPath: /
     envVars:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://jay-kirana-api.onrender.com
+        value: https://jay-kirana.onrender.com
       - key: VITE_UPLOAD_URL
-        value: https://jay-kirana-api.onrender.com/uploads 
+        value: https://jay-kirana.onrender.com/uploads 
