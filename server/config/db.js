@@ -3,16 +3,33 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGODB_URI;
+    let uri = process.env.MONGODB_URI;
     if (!uri) {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
     console.log('Attempting to connect to MongoDB...');
     
-    // Extract hostname from URI for logging
-    const sanitizedUri = uri.replace(/:[^:@]+@/, ':****@');
-    console.log('Using connection string:', sanitizedUri);
+    // Parse and reconstruct the URI to ensure proper encoding
+    try {
+      const [prefix, rest] = uri.split('://');
+      const [credentials, hostAndPath] = rest.split('@');
+      const [username, password] = credentials.split(':');
+      
+      // Properly encode the username and password
+      const encodedUsername = encodeURIComponent(username);
+      const encodedPassword = encodeURIComponent(password);
+      
+      // Reconstruct the URI with encoded components
+      uri = `${prefix}://${encodedUsername}:${encodedPassword}@${hostAndPath}`;
+      
+      // Log sanitized URI for debugging
+      const sanitizedUri = uri.replace(/:[^:@]+@/, ':****@');
+      console.log('Using connection string:', sanitizedUri);
+    } catch (parseError) {
+      console.error('Error parsing connection string:', parseError);
+      throw new Error('Invalid MongoDB connection string format');
+    }
 
     const conn = await mongoose.connect(uri, {
       maxPoolSize: 10,
