@@ -8,13 +8,23 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
-    const conn = await mongoose.connect(uri);
+    console.log('Attempting to connect to MongoDB...');
+    console.log('Connection string format check:', uri.startsWith('mongodb+srv://') ? 'Valid prefix' : 'Invalid prefix');
+
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s
+    });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     // Add connection error handler
     mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
+      console.error('MongoDB connection error:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
     });
 
     // Add disconnection handler
@@ -36,8 +46,13 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    throw error; // Let the calling code handle the error
+    console.error('Detailed MongoDB connection error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    throw error;
   }
 };
 
