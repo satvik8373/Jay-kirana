@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
-const adminRoutes = require('./routes/admin');
 const path = require('path');
 const mongoose = require('mongoose');
 
@@ -30,7 +29,6 @@ const corsOptions = {
     
     // Log the request origin
     console.log('Request origin:', origin);
-    console.log('Environment:', process.env.NODE_ENV);
     
     if (process.env.NODE_ENV === 'development') {
       callback(null, true);
@@ -112,48 +110,35 @@ if (process.env.NODE_ENV === 'development') {
 
 // Routes
 app.use('/api', apiRoutes);
-app.use('/admin', adminRoutes);
 
-// Root route for health check
-app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'Server is running',
-    environment: process.env.NODE_ENV
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React build directory
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
   });
-});
+} else {
+  // Root route for health check in development
+  app.get('/', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Server is running' });
+  });
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Not Found',
-    path: req.path
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    path: req.path,
-    method: req.method
-  });
-
-  res.status(err.status || 500).json({ 
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
-    path: req.path
-  });
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Get port from environment and store in Express

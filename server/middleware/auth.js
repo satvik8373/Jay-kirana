@@ -3,34 +3,24 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    // Get token from header
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      return res.status(401).json({ error: 'No authentication token, access denied' });
+      throw new Error('No authentication token provided');
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Find user
-    const user = await User.findById(decoded.id).select('-password');
-    
+    const user = await User.findById(decoded.id);
+
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Add user to request
     req.user = user;
-    req.token = token;
-    
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(401).json({ 
-      error: 'Please authenticate',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('Authentication error:', error);
+    res.status(401).json({ error: 'Please authenticate' });
   }
 };
 

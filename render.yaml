@@ -1,24 +1,35 @@
 services:
+  # API Service
   - type: web
-    name: jay-kirana-backend
+    name: jay-kirana-api
     env: node
     buildCommand: cd server && npm install
     startCommand: cd server && node index.js
-    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false # This will be set manually in Render dashboard
+        sync: false
       - key: JWT_SECRET
         sync: false
-      - key: EMAIL_USER
-        sync: false
-      - key: EMAIL_PASS
-        sync: false
-      - key: ADMIN_EMAIL
-        sync: false
-      - key: CLIENT_URL
-        sync: false 
+    healthCheckPath: /health
+    
+  # Client Service
+  - type: web
+    name: jay-kirana
+    env: node
+    buildCommand: cd client && npm install && npm run build
+    startCommand: cd client && npm run preview
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://jay-kirana-api.onrender.com
+      - key: VITE_UPLOAD_URL
+        value: https://jay-kirana-api.onrender.com/uploads
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html 
