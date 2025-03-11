@@ -17,30 +17,10 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: function(origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5200',
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana.netlify.app',
-      'https://jay-kirana-api.onrender.com'
-    ];
-
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      console.warn('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: 'http://localhost:5200', // Allow requests from the client
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  credentials: true
 }));
 
 // Load environment variables

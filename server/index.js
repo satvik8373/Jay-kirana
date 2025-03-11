@@ -26,10 +26,12 @@ const corsOptions = {
       'https://jay-kirana-api.onrender.com'
     ];
     
-    // Log the origin for debugging
-    console.log('Request origin:', origin);
+    // Add your Netlify URL to allowed origins in production
+    if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL) {
+      allowedOrigins.push(process.env.CLIENT_URL);
+    }
     
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.warn('Blocked by CORS:', origin);
@@ -46,13 +48,9 @@ const corsOptions = {
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Additional CORS headers middleware
+// Security middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
-  // Log headers for debugging
-  console.log('Request headers:', req.headers);
-  
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else if (origin) {
@@ -69,6 +67,9 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

@@ -12,14 +12,12 @@ function ProductList({ products, addToCart }) {
       setFilteredProducts(products);
     } else {
       setFilteredProducts(products.filter(product => 
-        product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
       ));
     }
   }, [selectedCategory, products]);
 
-  const categories = ['all', ...new Set(products
-    .filter(product => product.category)
-    .map(product => product.category.toLowerCase()))];
+  const categories = ['all', ...new Set(products.map(product => product.category.toLowerCase()))];
 
   return (
     <div className="product-list-container">
