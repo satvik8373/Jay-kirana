@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -17,14 +18,14 @@ function ForgotPassword() {
 
     try {
       console.log('Sending password reset request for email:', email);
-      const response = await axios.post('http://localhost:5000/api/forgot-password', // Changed port to 5000
+      const response = await axios.post(`${config.apiUrl}/api/forgot-password`,
         { email },
         {
           headers: {
             'Content-Type': 'application/json'
           },
-          withCredentials: true, // Added to handle CORS
-          timeout: 10000 // 10 second timeout
+          withCredentials: true,
+          timeout: 10000
         }
       );
       
@@ -163,7 +164,7 @@ function ForgotPassword() {
           background: transparent;
           border: none;
           outline: none;
-          font-size: 16px;
+          font-size: 16px;  
           color: #333333;
           padding: 0 10px;
         }

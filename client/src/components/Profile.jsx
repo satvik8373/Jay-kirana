@@ -56,12 +56,12 @@ function Profile() {
           return;
         }
 
-        console.log('Making request to:', `${config.apiUrl}/user/profile`);
+        console.log('Making request to:', `${config.apiUrl}/api/user/profile`);
         console.log('Request headers:', {
           Authorization: `Bearer ${token}`
         });
 
-        const response = await axios.get(`${config.apiUrl}/user/profile`, {
+        const response = await axios.get(`${config.apiUrl}/api/user/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

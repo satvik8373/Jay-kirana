@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { apiService } from '../utils/api';
+import config from '../config';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '', remember: false });
@@ -17,24 +18,46 @@ function Login() {
     setIsLoading(true);
     setError('');
     
+    const axiosConfig = {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
     try {
       let response;
-      
-      // First request - Register if signing up
       if (isSignup) {
-        const userData = { 
-          ...form, 
-          name: form.email.split('@')[0] 
-        };
-        await apiService.register(userData);
+        response = await axios.post(
+          `${config.apiUrl}/api/register`, 
+          { 
+            ...form, 
+            name: form.email.split('@')[0] 
+          },
+          axiosConfig
+        );
+        // For signup, wait for the response and then log in
+        response = await axios.post(
+          `${config.apiUrl}/api/login`,
+          {
+            email: form.email,
+            password: form.password
+          },
+          axiosConfig
+        );
+      } else {
+        response = await axios.post(
+          `${config.apiUrl}/api/login`,
+          {
+            email: form.email,
+            password: form.password
+          },
+          axiosConfig
+        );
       }
 
-      // Login request (for both signup and login)
-      response = await apiService.login({
-        email: form.email,
-        password: form.password
-      });
-
+      console.log('Login response:', response.data);
+      
       if (!response.data || !response.data.token || !response.data.user) {
         throw new Error('Invalid response from server');
       }
@@ -46,7 +69,7 @@ function Login() {
       setError(
         err.response?.data?.error || 
         err.message || 
-        'Authentication failed. Please check your internet connection and try again.'
+        'Authentication failed'
       );
     } finally {
       setIsLoading(false);
