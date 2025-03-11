@@ -2,8 +2,12 @@ const express = require('express');
 const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const apiRoutes = require('../../server/routes/api');
+const path = require('path');
 require('dotenv').config();
+
+// Import routes and utils with correct paths
+const apiRoutes = require('./routes/api');
+const { transporter, defaultMailOptions } = require('./utils/mailer');
 
 const app = express();
 
@@ -29,6 +33,15 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.log('Connected to MongoDB');
 }).catch(err => {
   console.error('MongoDB connection error:', err);
+});
+
+// Verify email configuration
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('Email configuration error:', error);
+  } else {
+    console.log('Email server is ready to send messages');
+  }
 });
 
 // API routes

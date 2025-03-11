@@ -16,4 +16,9 @@
 
 [build.environment]
   CI = "false"
-  NODE_VERSION = "18" 
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--no-audit --no-fund"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild" 
