@@ -41,6 +41,18 @@ services:
       - path: /*
         name: Cache-Control
         value: no-cache
+      - path: /*.js
+        name: Content-Type
+        value: application/javascript
+      - path: /*.mjs
+        name: Content-Type
+        value: application/javascript
+      - path: /*.css
+        name: Content-Type
+        value: text/css
+      - path: /*.html
+        name: Content-Type
+        value: text/html
     envVars:
       - key: NODE_ENV
         value: production
