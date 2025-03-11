@@ -20,10 +20,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://127.0.0.1:5200',
       'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
-      'https://jay-kirana.netlify.app',
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
+      'http://127.0.0.1:5173'
     ];
     
     // Add your Netlify URL to allowed origins in production
@@ -34,7 +31,6 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
-      console.warn('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -50,15 +46,12 @@ app.use(cors(corsOptions));
 
 // Security middleware
 app.use((req, res, next) => {
+  // Allow requests from any origin in development
   const origin = req.headers.origin;
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else if (origin) {
-    const allowedOrigins = [
-      'https://jay-kirana.netlify.app',
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
-    ];
+    const allowedOrigins = ['http://localhost:5200', 'http://localhost:3000', 'http://localhost:5173'];
     if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
@@ -110,15 +103,6 @@ app.get('/health', (req, res) => {
     status: 'ok',
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
-});
-
-// Catch-all route for client-side routing
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.status(200).json({ status: 'ok', message: 'API server is running' });
-  } else {
-    res.status(404).json({ error: 'API endpoint not found' });
-  }
 });
 
 // Error handling middleware
