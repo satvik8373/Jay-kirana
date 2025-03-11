@@ -113,57 +113,50 @@ app.use((err, req, res, next) => {
 
 // Get port from environment and store in Express
 const PORT = process.env.PORT || 10000;
+app.set('port', PORT);
 
 const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
-    
-    // Create HTTP server
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log('Environment:', process.env.NODE_ENV);
-      console.log(`Health check available at: http://localhost:${PORT}/health`);
-    });
+  let retries = 0;
+  const maxRetries = 3;
 
-    // Handle server errors
-    server.on('error', (error) => {
-      if (error.syscall !== 'listen') {
-        console.error('Server error:', error);
-        process.exit(1);
-      }
+  const tryConnect = async () => {
+    try {
+      // Connect to MongoDB
+      await connectDB();
+      
+      // Create HTTP server
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server is running on port ${PORT}`);
+        console.log(`Server URL: http://0.0.0.0:${PORT}`);
+        console.log('Environment:', process.env.NODE_ENV);
+      });
 
-      switch (error.code) {
-        case 'EACCES':
-          console.error(`Port ${PORT} requires elevated privileges`);
-          process.exit(1);
-          break;
-        case 'EADDRINUSE':
+      // Handle server errors
+      server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE') {
           console.error(`Port ${PORT} is already in use`);
           process.exit(1);
-          break;
-        default:
+        } else {
           console.error('Server error:', error);
-          process.exit(1);
-      }
-    });
-
-    // Handle process termination
-    process.on('SIGTERM', () => {
-      console.log('SIGTERM received. Shutting down gracefully...');
-      server.close(() => {
-        console.log('Server closed');
-        mongoose.connection.close(false, () => {
-          console.log('MongoDB connection closed');
-          process.exit(0);
-        });
+        }
       });
-    });
 
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+    } catch (error) {
+      console.error(`Failed to start server (attempt ${retries + 1}/${maxRetries}):`, error.message);
+      
+      if (retries < maxRetries) {
+        retries++;
+        console.log(`Retrying in 5 seconds... (${retries}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return tryConnect();
+      } else {
+        console.error('Max retries reached. Exiting...');
+        process.exit(1);
+      }
+    }
+  };
+
+  await tryConnect();
 };
 
 // Start the server
