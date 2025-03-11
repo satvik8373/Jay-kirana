@@ -111,21 +111,10 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the React build directory
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  });
-} else {
-  // Root route for health check in development
-  app.get('/', (req, res) => {
-    res.status(200).json({ status: 'ok', message: 'Server is running' });
-  });
-}
+// Root route for health check
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

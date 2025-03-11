@@ -42,16 +42,10 @@ export default defineConfig(({ command, mode }) => {
       ),
       __MODE__: JSON.stringify(mode)
     },
-    // Add base URL configuration
     base: '/',
-    // Add preview configuration for testing production build locally
-    preview: {
-      port: 5200,
-      strictPort: true,
-      host: true,
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      }
+    // Remove preview configuration as we're using static deployment
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom']
     }
   };
 });
