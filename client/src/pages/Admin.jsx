@@ -9,21 +9,60 @@ import EmailMarketing from '../components/EmailMarketing';
 
 function Admin() {
   const [activeSection, setActiveSection] = useState('orders');
-  const { isAdmin, isAuthenticated } = useAuth();
+  const [error, setError] = useState(null);
+  const { isAdmin, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    if (!isAdmin) {
-      navigate('/');
-      return;
-    }
-  }, [isAdmin, isAuthenticated, navigate]);
+    const checkAccess = () => {
+      if (!loading) {
+        if (!isAuthenticated) {
+          navigate('/login', { 
+            state: { 
+              from: '/admin',
+              message: 'Please log in to access the admin panel' 
+            } 
+          });
+          return;
+        }
+        
+        if (!isAdmin) {
+          setError('Access denied. Admin privileges required.');
+          navigate('/', { 
+            state: { 
+              error: 'Access denied. Admin privileges required.' 
+            } 
+          });
+          return;
+        }
+      }
+    };
+
+    checkAccess();
+  }, [isAdmin, isAuthenticated, loading, navigate]);
 
   const renderSection = () => {
+    if (error) {
+      return (
+        <div className="error-container">
+          <h2>Error</h2>
+          <p>{error}</p>
+        </div>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className="loading-container">
+          <p>Loading...</p>
+        </div>
+      );
+    }
+
+    if (!isAuthenticated || !isAdmin) {
+      return null;
+    }
+
     switch (activeSection) {
       case 'orders':
         return <Orders />;
@@ -38,13 +77,11 @@ function Admin() {
     }
   };
 
-  if (!isAuthenticated || !isAdmin) {
-    return null;
-  }
-
   return (
     <div className="admin">
-      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+      {(isAuthenticated && isAdmin) && (
+        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+      )}
       <div className="admin-content">
         {renderSection()}
       </div>
@@ -57,9 +94,28 @@ function Admin() {
         }
 
         .admin-content {
-          margin-left: 250px;
+          margin-left: ${isAuthenticated && isAdmin ? '250px' : '0'};
           padding: 20px;
           min-height: calc(100vh - 60px);
+        }
+
+        .error-container {
+          padding: 20px;
+          background-color: #ffebee;
+          border-radius: 8px;
+          margin: 20px;
+        }
+
+        .error-container h2 {
+          color: #c62828;
+          margin-bottom: 10px;
+        }
+
+        .loading-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 200px;
         }
 
         @media (max-width: 768px) {
