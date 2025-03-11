@@ -115,7 +115,10 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 10000;
 app.set('port', PORT);
 
-const startServer = async () => {
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 10000; // 10 seconds
+
+const startServer = async (retryCount = 0) => {
   try {
     // Connect to MongoDB
     await connectDB();
@@ -127,8 +130,15 @@ const startServer = async () => {
     });
 
   } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    console.error(`Failed to start server (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
+    
+    if (process.env.NODE_ENV === 'production' && retryCount < MAX_RETRIES) {
+      console.log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
+      setTimeout(() => startServer(retryCount + 1), RETRY_DELAY);
+    } else {
+      console.error('Max retries reached or not in production. Exiting.');
+      process.exit(1);
+    }
   }
 };
 
