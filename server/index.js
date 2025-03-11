@@ -29,12 +29,15 @@ const corsOptions = {
     
     // Log the request origin
     console.log('Request origin:', origin);
+    console.log('Environment:', process.env.NODE_ENV);
     
+    // In development, allow all origins
     if (process.env.NODE_ENV === 'development') {
       callback(null, true);
       return;
     }
     
+    // In production, check against allowed origins
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -64,6 +67,7 @@ app.use((req, res, next) => {
     env: process.env.NODE_ENV
   });
 
+  // Set CORS headers based on environment
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else {
@@ -76,6 +80,7 @@ app.use((req, res, next) => {
     }
   }
 
+  // Set other security headers
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
