@@ -17,31 +17,10 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      // Development URLs
-      'http://localhost:5200',
-      'http://localhost:3000',
-      'http://localhost:5173',
-      // Production URLs
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
-    ];
-    
-    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn('Blocked by CORS in API routes:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: 'http://localhost:5200', // Allow requests from the client
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
+  credentials: true
 }));
 
 // Load environment variables
@@ -1256,48 +1235,6 @@ router.get('/uploads/marketing/:filename', async (req, res) => {
     console.error('Marketing image fetch error:', error);
     res.status(400).json({ error: 'Failed to fetch image' });
   }
-});
-
-// Debug middleware for API routes
-router.use((req, res, next) => {
-  console.log('API Request:', {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    headers: {
-      authorization: req.headers.authorization ? 'Present' : 'Missing',
-      'content-type': req.headers['content-type']
-    }
-  });
-  next();
-});
-
-// Test endpoint to verify API is working
-router.get('/test', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'API is working',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  });
-});
-
-// Debug endpoint for CORS
-router.get('/debug/cors', (req, res) => {
-  res.json({
-    message: 'CORS debug info',
-    origin: req.headers.origin,
-    environment: process.env.NODE_ENV,
-    headers: {
-      'access-control-allow-origin': res.getHeader('Access-Control-Allow-Origin'),
-      'access-control-allow-credentials': res.getHeader('Access-Control-Allow-Credentials'),
-      'access-control-allow-methods': res.getHeader('Access-Control-Allow-Methods'),
-      'access-control-allow-headers': res.getHeader('Access-Control-Allow-Headers')
-    },
-    timestamp: new Date().toISOString()
-  });
 });
 
 module.exports = router;

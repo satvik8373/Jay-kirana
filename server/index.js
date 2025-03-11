@@ -15,20 +15,17 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      // Development URLs
       'http://localhost:5200',
       'http://localhost:3000',
       'http://localhost:5173',
-      // Production URLs
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
+      'http://127.0.0.1:5200',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      'https://jay-kirana.onrender.com', // Production client URL on Render
+      'https://jay-kirana-api.onrender.com' // Production server URL
     ];
     
-    // Log the request origin
-    console.log('Request origin:', origin);
-    console.log('Current environment:', process.env.NODE_ENV);
-    
-    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.warn('Blocked by CORS:', origin);
@@ -48,23 +45,12 @@ app.use(cors(corsOptions));
 // Security middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
-  // Log the request details
-  console.log('Request details:', {
-    method: req.method,
-    path: req.path,
-    origin: origin,
-    env: process.env.NODE_ENV
-  });
-
-  if (process.env.NODE_ENV === 'development' || !origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  } else {
+  if (origin) {
     const allowedOrigins = [
       'https://jay-kirana.onrender.com',
       'https://jay-kirana-api.onrender.com'
     ];
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
   }
@@ -86,6 +72,17 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Debug middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`, {
+    origin: req.headers.origin,
+    body: req.body,
+    query: req.query,
+    params: req.params
+  });
+  next();
+});
+
 // Routes
 app.use('/api', apiRoutes);
 
@@ -94,39 +91,20 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Root route for health check
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    environment: process.env.NODE_ENV
+  });
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
-});
-
-// Catch-all route for API endpoints
-app.use('/api/*', (req, res) => {
-  console.log('404 API route not found:', req.originalUrl);
-  res.status(404).json({ 
-    error: 'API endpoint not found',
-    path: req.originalUrl,
-    method: req.method
-  });
-});
-
-// Handle SPA routes for client-side routing
-app.get('*', (req, res) => {
-  if (req.accepts('html')) {
-    res.status(200).json({ 
-      status: 'ok', 
-      message: 'API Server - For UI, please visit the client URL' 
-    });
-  } else {
-    res.status(404).json({ error: 'Not found' });
-  }
 });
 
 // Error handling middleware

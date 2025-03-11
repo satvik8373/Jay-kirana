@@ -45,23 +45,13 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        console.log('Verifying token with:', `${config.apiUrl}/user/me`);
-        const response = await axios.get(`${config.apiUrl}/user/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log('Auth verification response:', response.data);
-        setUser(response.data);
-        setIsAuthenticated(true);
-        setIsAdmin(response.data.email === ADMIN_EMAIL);
+          const response = await axios.get(`${config.apiUrl}/user/me`);
+          setUser(response.data);
+          setIsAuthenticated(true);
+          setIsAdmin(response.data.email === ADMIN_EMAIL);
         localStorage.setItem('user', JSON.stringify(response.data));
-      } catch (error) {
-        console.error('Error verifying token:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
+        } catch (error) {
+          console.error('Error verifying token:', error);
         if (error.response?.status === 401) {
           handleLogout();
         }
