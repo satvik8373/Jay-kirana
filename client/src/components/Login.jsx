@@ -18,23 +18,42 @@ function Login() {
     setIsLoading(true);
     setError('');
     
+    const axiosConfig = {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
     try {
       let response;
       if (isSignup) {
-        response = await axios.post(`${config.apiUrl}/api/register`, { 
-          ...form, 
-          name: form.email.split('@')[0] 
-        });
+        response = await axios.post(
+          `${config.apiUrl}/api/register`, 
+          { 
+            ...form, 
+            name: form.email.split('@')[0] 
+          },
+          axiosConfig
+        );
         // For signup, wait for the response and then log in
-        response = await axios.post(`${config.apiUrl}/api/login`, {
-          email: form.email,
-          password: form.password
-        });
+        response = await axios.post(
+          `${config.apiUrl}/api/login`,
+          {
+            email: form.email,
+            password: form.password
+          },
+          axiosConfig
+        );
       } else {
-        response = await axios.post(`${config.apiUrl}/api/login`, {
-          email: form.email,
-          password: form.password
-        });
+        response = await axios.post(
+          `${config.apiUrl}/api/login`,
+          {
+            email: form.email,
+            password: form.password
+          },
+          axiosConfig
+        );
       }
 
       console.log('Login response:', response.data);

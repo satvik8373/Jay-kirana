@@ -21,8 +21,9 @@ const corsOptions = {
       'http://127.0.0.1:5200',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      'https://jay-kirana.netlify.app', // Production client URL
-      'https://jay-kirana-api.onrender.com' // Production server URL
+      'https://jay-kirana.netlify.app',
+      'https://jay-kirana-api.onrender.com',
+      'https://jay-kirana.onrender.com'  // Add the Render client URL
     ];
     
     // Add your Netlify URL to allowed origins in production
@@ -56,7 +57,8 @@ app.use((req, res, next) => {
   } else if (origin) {
     const allowedOrigins = [
       'https://jay-kirana.netlify.app',
-      'https://jay-kirana-api.onrender.com'
+      'https://jay-kirana-api.onrender.com',
+      'https://jay-kirana.onrender.com'  // Add the Render client URL
     ];
     if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
@@ -70,6 +72,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
