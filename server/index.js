@@ -7,6 +7,10 @@ const path = require('path');
 
 const app = express();
 
+// Parse JSON bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
@@ -38,39 +42,6 @@ const corsOptions = {
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Security middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (process.env.NODE_ENV === 'development') {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  } else if (origin) {
-    const allowedOrigins = [
-      'https://jay-kirana.onrender.com',
-      'http://localhost:5000',
-      'http://localhost:5200'
-    ];
-    if (allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
-
-// Parse JSON bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -86,8 +57,19 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Routes
+// Mount API routes
 app.use('/api', apiRoutes);
+
+// Root route for health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// Handle 404 errors
+app.use((req, res) => {
+  console.log('404 Not Found:', req.method, req.url);
+  res.status(404).json({ error: 'Route not found' });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -115,4 +97,4 @@ const startServer = async () => {
   }
 };
 
-startServer(); 
+startServer();
