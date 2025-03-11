@@ -17,7 +17,9 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: 'http://localhost:5200', // Allow requests from the client
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.CLIENT_URL, 'http://localhost:5200'] 
+    : 'http://localhost:5200',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

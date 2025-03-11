@@ -1,7 +1,6 @@
 const config = {
-  apiUrl: process.env.NODE_ENV === 'production' 
-    ? process.env.VITE_API_URL || 'https://your-production-api.com/api'
-    : 'http://localhost:5000/api',
+  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  serverUrl: process.env.REACT_APP_SERVER_URL || 'http://localhost:5000',
   uploadUrl: process.env.NODE_ENV === 'production'
     ? process.env.VITE_UPLOAD_URL || 'https://your-production-api.com/uploads'
     : 'http://localhost:5000/uploads'
