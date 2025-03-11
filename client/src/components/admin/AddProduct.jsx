@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from '../../config';
+import { toast } from 'react-toastify';
 import { FaPlus, FaEdit, FaTrash, FaImage } from 'react-icons/fa';
 
 function AddProduct() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    description: '',
     price: '',
+    category: '',
     stock: '',
     image: null
   });
@@ -27,22 +31,36 @@ function AddProduct() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/categories`);
+      const response = await axios.get(`${config.apiUrl}/api/categories`, {
+        withCredentials: true
+      });
       setCategories(response.data);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to load categories');
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === 'image') {
+      setFormData(prev => ({
+        ...prev,
+        image: files[0]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
-    if (name === 'image' && value) {
-      setImagePreview(value);
+    if (name === 'image' && files[0]) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(files[0]);
     }
   };
 
@@ -63,36 +81,31 @@ function AddProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append('name', formData.name);
-    data.append('category', formData.category);
-    data.append('price', formData.price);
-    data.append('stock', formData.stock);
-    if (formData.image) {
-      data.append('image', formData.image);
-    }
+    setLoading(true);
 
     try {
+      const data = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null) {
+          data.append(key, formData[key]);
+        }
+      });
+
       const response = await axios.post(`${config.apiUrl}/api/products`, data, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        withCredentials: true
       });
-      if (response.status === 201) {
-        setFormData({
-          name: '',
-          category: '',
-          price: '',
-          stock: '',
-          image: null
-        });
-        setSuccess('Product added successfully');
-        setPacks([]);
-        setImagePreview(null);
-      }
-    } catch (err) {
-      console.error('Error adding product:', err);
-      setError('Failed to add product: ' + (err.response?.data?.error || err.message));
+
+      toast.success('Product added successfully!');
+      navigate('/admin/manage-products');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add product';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,73 +172,82 @@ function AddProduct() {
 
           <form onSubmit={handleSubmit} className="product-form">
             <div className="form-group">
-              <label>Product Name</label>
+              <label htmlFor="name">Product Name</label>
               <input
                 type="text"
+                id="name"
                 name="name"
                 value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter product name"
+                onChange={handleChange}
+                required
               />
             </div>
 
             <div className="form-group">
-              <label>Category</label>
+              <label htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="price">Price</label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="category">Category</label>
               <select
+                id="category"
                 name="category"
                 value={formData.category}
-                onChange={handleInputChange}
+                onChange={handleChange}
+                required
               >
-                <option value="">Select Category</option>
-                {categories.map(cat => (
-                  <option key={cat._id} value={cat.name}>{cat.name}</option>
+                <option value="">Select a category</option>
+                {categories.map(category => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label>Price (₹)</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Stock</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
+            <div className="form-group">
+              <label htmlFor="stock">Stock</label>
+              <input
+                type="number"
+                id="stock"
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                min="0"
+                required
+              />
             </div>
 
             <div className="form-group">
-              <label>Image</label>
+              <label htmlFor="image">Product Image</label>
               <input
                 type="file"
+                id="image"
                 name="image"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setFormData(prev => ({ ...prev, image: reader.result }));
-                      setImagePreview(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
+                onChange={handleChange}
+                accept="image/*"
+                required
               />
             </div>
 
@@ -264,8 +286,8 @@ function AddProduct() {
               ))}
             </div>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Product'}
+            <button type="submit" disabled={loading}>
+              {loading ? 'Adding Product...' : 'Add Product'}
             </button>
           </form>
         </div>

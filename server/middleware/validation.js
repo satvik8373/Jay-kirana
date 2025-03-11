@@ -24,6 +24,13 @@ const validateProduct = (req, res, next) => {
     });
   }
 
+  // Validate image
+  if (!req.file) {
+    return res.status(400).json({
+      message: 'Product image is required'
+    });
+  }
+
   // Convert price and stock to numbers
   req.body.price = numericPrice;
   req.body.stock = numericStock;
