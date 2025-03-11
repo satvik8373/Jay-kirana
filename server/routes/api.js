@@ -121,30 +121,48 @@ router.post('/register', async (req, res) => {
 // User Login (public)
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+
   try {
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
-    try {
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
-      const userData = {
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email
-        }
-      };
-      res.json(userData);
-    } catch (tokenError) {
-      console.error('Error generating token:', tokenError);
-      res.status(500).json({ error: 'Error generating authentication token' });
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Server error' });
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Prepare user data (excluding sensitive information)
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.email === process.env.ADMIN_EMAIL
+    };
+
+    // Send response
+    res.json({
+      token,
+      user: userData
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error during login' });
   }
 });
 

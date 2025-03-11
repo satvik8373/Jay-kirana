@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import config from '../config';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '', remember: false });
@@ -21,9 +20,9 @@ function Login() {
     try {
       let response;
       if (isSignup) {
-        response = await axios.post(`${config.apiUrl}/register`, { ...form, name: form.email.split('@')[0] });
+        response = await axios.post('/api/register', { ...form, name: form.email.split('@')[0] });
       } else {
-        response = await axios.post(`${config.apiUrl}/login`, form);
+        response = await axios.post('/api/login', form);
       }
       login(response.data);
       navigate('/');
