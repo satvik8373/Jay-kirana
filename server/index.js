@@ -18,10 +18,11 @@ const corsOptions = {
       'http://localhost:5200',
       'http://127.0.0.1:5000',
       'http://127.0.0.1:5200',
-      'https://jay-kirana.onrender.com'
+      'https://jay-kirana.onrender.com',
+      'https://jay-kirana-api.onrender.com'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -39,12 +40,15 @@ app.use(cors(corsOptions));
 
 // Security middleware
 app.use((req, res, next) => {
-  // Allow requests from any origin in development
   const origin = req.headers.origin;
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else if (origin) {
-    const allowedOrigins = ['http://localhost:5200', 'http://localhost:3000', 'http://localhost:5173'];
+    const allowedOrigins = [
+      'https://jay-kirana.onrender.com',
+      'http://localhost:5000',
+      'http://localhost:5200'
+    ];
     if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
