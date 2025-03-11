@@ -19,8 +19,9 @@ const corsOptions = {
       'http://localhost:5173',
       'http://127.0.0.1:5200',
       'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173'
-    ];
+      'http://127.0.0.1:5173',
+      process.env.CLIENT_URL // Add the production client URL
+    ].filter(Boolean); // Remove any undefined values
     
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
