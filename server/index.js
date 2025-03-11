@@ -21,11 +21,17 @@ const corsOptions = {
       'http://127.0.0.1:5200',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      'https://jay-kirana.onrender.com', // Production client URL on Render
-      'https://jay-kirana-api.onrender.com' // Production server URL
+      'https://jay-kirana.netlify.app',
+      'https://jay-kirana.onrender.com',
+      'https://jay-kirana-api.onrender.com'
     ];
     
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    // Add your Netlify URL to allowed origins in production
+    if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL) {
+      allowedOrigins.push(process.env.CLIENT_URL);
+    }
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.warn('Blocked by CORS:', origin);
@@ -45,12 +51,15 @@ app.use(cors(corsOptions));
 // Security middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) {
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else if (origin) {
     const allowedOrigins = [
+      'https://jay-kirana.netlify.app',
       'https://jay-kirana.onrender.com',
       'https://jay-kirana-api.onrender.com'
     ];
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
   }
@@ -72,39 +81,44 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Debug middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`, {
-    origin: req.headers.origin,
-    body: req.body,
-    query: req.query,
-    params: req.params
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Debug middleware (only in development)
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`, {
+      body: req.body,
+      query: req.query,
+      params: req.params
+    });
+    next();
   });
-  next();
-});
+}
 
 // Routes
 app.use('/api', apiRoutes);
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Root route for health check
 app.get('/', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    message: 'Server is running',
-    environment: process.env.NODE_ENV
-  });
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    environment: process.env.NODE_ENV,
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
+});
+
+// Catch-all route for client-side routing
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.status(200).json({ status: 'ok', message: 'API server is running' });
+  } else {
+    res.status(404).json({ error: 'API endpoint not found' });
+  }
 });
 
 // Error handling middleware
