@@ -1,0 +1,14 @@
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_ENV = "production"
+  VITE_API_URL = "https://jay-kirana-api.onrender.com"
+  VITE_UPLOAD_URL = "https://jay-kirana-api.onrender.com/uploads"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 

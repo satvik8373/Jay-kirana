@@ -1,4 +1,5 @@
 services:
+  # Backend API service
   - type: web
     name: jay-kirana-backend
     env: node
@@ -21,4 +22,18 @@ services:
       - key: ADMIN_EMAIL
         sync: false
       - key: CLIENT_URL
-        sync: false 
+        sync: false
+
+  # Frontend static site
+  - type: static
+    name: jay-kirana-frontend
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    publishDir: client/dist
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://jay-kirana-api.onrender.com
+      - key: VITE_UPLOAD_URL
+        value: https://jay-kirana-api.onrender.com/uploads 
