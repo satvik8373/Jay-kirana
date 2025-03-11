@@ -22,6 +22,11 @@ const corsOptions = {
       'http://127.0.0.1:5173'
     ];
     
+    // Add your Netlify URL to allowed origins in production
+    if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL) {
+      allowedOrigins.push(process.env.CLIENT_URL);
+    }
+    
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
@@ -104,11 +109,18 @@ const startServer = async () => {
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+      console.log('MongoDB URI:', process.env.MONGODB_URI ? '**URI Set**' : 'Missing MONGODB_URI');
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    // Don't exit immediately in production, try to reconnect
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Attempting to reconnect in 5 seconds...');
+      setTimeout(startServer, 5000);
+    } else {
+      process.exit(1);
+    }
   }
 };
 
