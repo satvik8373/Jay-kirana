@@ -76,14 +76,15 @@ const verifyToken = async (req, res, next) => {
 };
 
 // Get current user (requires authentication)
-router.get('/user/me', verifyToken, async (req, res) => {
+router.get('/user/me', auth, async (req, res) => {
   try {
-    res.json({
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email
-    });
-  } catch (err) {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -149,9 +150,10 @@ router.post('/login', async (req, res) => {
 // Get all products (public)
 router.get('/products', async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate('category', 'name');
     res.json(products);
-  } catch (err) {
+  } catch (error) {
+    console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -399,39 +401,15 @@ router.post('/orders', async (req, res) => {
 });
 
 // Get all orders (public)
-router.get('/orders', async (req, res) => {
-  console.log('Received request to fetch orders');
+router.get('/orders', auth, async (req, res) => {
   try {
-    // First check if we have any orders
-    const count = await Order.countDocuments();
-    console.log(`Total orders in database: ${count}`);
-
-    // Get all orders with full details
     const orders = await Order.find()
-      .select('-__v')  // Exclude version key
-      .lean()  // Convert to plain JavaScript object
-      .sort({ orderDate: -1 });  // Sort by newest first
-    
-    console.log(`Successfully retrieved ${orders.length} orders`);
-    
-    if (orders.length === 0) {
-      console.log('No orders found in the database');
-    } else {
-      console.log('First order example:', JSON.stringify(orders[0], null, 2));
-    }
-    
-    // Send the response
+      .populate('user', 'name email')
+      .populate('items.product', 'name price');
     res.json(orders);
-  } catch (err) {
-    console.error('Error fetching orders:', {
-      error: err,
-      message: err.message,
-      stack: err.stack
-    });
-    res.status(500).json({ 
-      error: 'Failed to fetch orders',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -508,27 +486,11 @@ router.put('/orders/:orderId/status', async (req, res) => {
 // Get all categories
 router.get('/categories', async (req, res) => {
   try {
-    console.log('GET /categories - Fetching all categories');
-    const dbState = mongoose.connection.readyState;
-    console.log('MongoDB connection state:', dbState);
-
-    if (dbState !== 1) {
-      throw new Error('MongoDB not connected. Current state: ' + dbState);
-    }
-
-    const categories = await Category.find().sort({ name: 1 });
-    console.log('Categories fetched successfully:', categories);
+    const categories = await Category.find();
     res.json(categories);
-  } catch (err) {
-    console.error('Error in GET /categories:', {
-      error: err,
-      message: err.message,
-      stack: err.stack
-    });
-    res.status(500).json({ 
-      error: 'Failed to fetch categories',
-      details: err.message
-    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1201,19 +1163,17 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
 // Get all users (admin only)
 router.get('/users/all', auth, async (req, res) => {
   try {
-    // Verify if user is admin
-    if (req.user.email !== process.env.ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Only admin can access user list' });
+    // Check if user is admin
+    const user = await User.findById(req.user.id);
+    if (!user || user.email !== 'satvikpatel8373@gmail.com') {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const users = await User.find()
-      .select('name email')  // Only return necessary fields
-      .sort({ name: 1 });    // Sort by name
-
+    const users = await User.find().select('-password');
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -1234,6 +1194,20 @@ router.get('/uploads/marketing/:filename', async (req, res) => {
   } catch (error) {
     console.error('Marketing image fetch error:', error);
     res.status(400).json({ error: 'Failed to fetch image' });
+  }
+});
+
+// Admin routes
+router.get('/admin/*', auth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.email !== 'satvikpatel8373@gmail.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+  } catch (error) {
+    console.error('Error in admin middleware:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
