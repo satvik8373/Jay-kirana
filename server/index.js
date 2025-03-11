@@ -93,31 +93,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Debug middleware (only in development)
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`, {
-      body: req.body,
-      query: req.query,
-      params: req.params
-    });
-    next();
-  });
-}
-
 // Routes
 app.use('/api', apiRoutes);
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/dist')));
-
-// Root route for health check
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -127,13 +110,28 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API status endpoint
+app.get('/api/status', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'API is running' });
+});
+
 // Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/') {
+app.get('*', (req, res, next) => {
+  // Skip API and health check routes
+  if (req.path.startsWith('/api/') || req.path === '/health') {
     return next();
   }
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  
+  // Log the request for debugging
+  console.log('Serving React app for path:', req.path);
+  
+  // Send the React app's index.html
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'), err => {
+    if (err) {
+      console.error('Error sending file:', err);
+      next(err);
+    }
+  });
 });
 
 // Error handling middleware
