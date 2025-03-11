@@ -7,10 +7,12 @@ export default defineConfig({
     port: 5200,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://jay-kirana-api.onrender.com'
+          : 'http://localhost:5000',
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   },
