@@ -14,11 +14,71 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Profile from './components/Profile';
 import './index.css';
 
+// NotFound component for 404 pages
+const NotFound = () => (
+  <div className="not-found">
+    <h1>404 - Page Not Found</h1>
+    <p>The page you are looking for does not exist.</p>
+    <a href="/">Go back to home</a>
+    
+    <style jsx>{`
+      .not-found {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        text-align: center;
+        background: #f5f5f5;
+      }
+      h1 {
+        color: #1a237e;
+        margin-bottom: 20px;
+      }
+      p {
+        color: #666;
+        margin-bottom: 20px;
+      }
+      a {
+        color: #1a237e;
+        text-decoration: none;
+        padding: 10px 20px;
+        border: 2px solid #1a237e;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+      }
+      a:hover {
+        background: #1a237e;
+        color: white;
+      }
+    `}</style>
+  </div>
+);
+
 function ProtectedRoute({ children, requireAdmin }) {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="loading">
+        <p>Loading...</p>
+        <style jsx>{`
+          .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 1.2rem;
+            color: #1a237e;
+          }
+        `}</style>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: window.location.pathname }} />;
   }
   
   if (requireAdmin && !isAdmin) {
@@ -79,24 +139,26 @@ function App() {
           )}
           <main>
             <Routes>
+              <Route path="/" element={<Home addToCart={addToCart} />} />
+              <Route 
+                path="/admin/*" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <Admin />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/admin" element={
-                <ProtectedRoute requireAdmin={true}>
-                  <Admin />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Home addToCart={addToCart} />
-                </ProtectedRoute>
-              } />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="/cart" element={
                 <ProtectedRoute>
                   <Cart 
@@ -106,12 +168,15 @@ function App() {
                   />
                 </ProtectedRoute>
               } />
-              <Route path="/checkout" element={
-                <ProtectedRoute>
-                  <Checkout cart={cart} onCheckout={clearCart} />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<Navigate to="/login" />} />
+              <Route 
+                path="/checkout" 
+                element={
+                  <ProtectedRoute>
+                    <Checkout cart={cart} onCheckout={clearCart} />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

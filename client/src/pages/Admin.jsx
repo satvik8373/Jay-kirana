@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
@@ -41,49 +41,39 @@ function Admin() {
     checkAccess();
   }, [isAdmin, isAuthenticated, loading, navigate]);
 
-  const renderSection = () => {
-    if (error) {
-      return (
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error}</p>
-        </div>
-      );
-    }
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
-    if (loading) {
-      return (
-        <div className="loading-container">
-          <p>Loading...</p>
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
-    if (!isAuthenticated || !isAdmin) {
-      return null;
-    }
-
-    switch (activeSection) {
-      case 'orders':
-        return <Orders />;
-      case 'add-product':
-        return <AddProduct />;
-      case 'manage-products':
-        return <ManageProducts />;
-      case 'email-marketing':
-        return <EmailMarketing />;
-      default:
-        return <Orders />;
-    }
-  };
+  if (!isAuthenticated || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="admin">
-      {(isAuthenticated && isAdmin) && (
-        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-      )}
+      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
       <div className="admin-content">
-        {renderSection()}
+        <Routes>
+          <Route path="/" element={<Navigate to="/admin/orders" replace />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/manage-products" element={<ManageProducts />} />
+          <Route path="/email-marketing" element={<EmailMarketing />} />
+          <Route path="*" element={<Navigate to="/admin/orders" replace />} />
+        </Routes>
       </div>
 
       <style jsx>{`
@@ -91,10 +81,12 @@ function Admin() {
           min-height: 100vh;
           background-color: #f5f5f5;
           padding-top: 60px;
+          display: flex;
         }
 
         .admin-content {
-          margin-left: ${isAuthenticated && isAdmin ? '250px' : '0'};
+          flex: 1;
+          margin-left: 250px;
           padding: 20px;
           min-height: calc(100vh - 60px);
         }
