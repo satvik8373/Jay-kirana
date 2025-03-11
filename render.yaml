@@ -1,45 +1,24 @@
 services:
   - type: web
-    name: jay-kirana
+    name: jay-kirana-backend
     env: node
-    buildCommand: |
-      cd client
-      npm install
-      npm run build
-      cd ../server
-      npm install
-      mkdir -p dist
-      cp -r ../client/dist ./dist
+    buildCommand: cd server && npm install
     startCommand: cd server && node index.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false
+        sync: false # This will be set manually in Render dashboard
       - key: JWT_SECRET
         sync: false
-    healthCheckPath: /health
-    buildFilter:
-      paths:
-        - client/**
-        - server/**
-    staticPublishPath: ./server/dist
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: /api/$1
-      - type: rewrite
-        source: /uploads/*
-        destination: /uploads/$1
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
-      - path: /assets/*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable 
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: CLIENT_URL
+        sync: false 

@@ -1,20 +1,33 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState } from 'react';
+import AddProduct from '../components/admin/AddProduct';
+import ManageProducts from '../components/admin/ManageProducts';
+import Orders from '../components/admin/Orders';
 import Sidebar from '../components/admin/Sidebar';
-import Header from '../components/admin/Header';
-import AdminDashboard from '../components/admin/AdminDashboard';
+import EmailMarketing from '../components/EmailMarketing';
 
-const Admin = () => {
+function Admin() {
+  const [activeSection, setActiveSection] = useState('orders');
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'orders':
+        return <Orders />;
+      case 'add-product':
+        return <AddProduct />;
+      case 'manage-products':
+        return <ManageProducts />;
+      case 'email-marketing':
+        return <EmailMarketing />;
+      default:
+        return <Orders />;
+    }
+  };
+
   return (
     <div className="admin">
-      <Header />
-      <div className="admin-layout">
-        <Sidebar />
-        <main className="admin-content">
-          <Outlet />
-          {/* Show dashboard when no sub-route is selected */}
-          {window.location.pathname === '/admin' && <AdminDashboard />}
-        </main>
+      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+      <div className="admin-content">
+        {renderSection()}
       </div>
 
       <style jsx>{`
@@ -23,17 +36,10 @@ const Admin = () => {
           background-color: #f5f5f5;
         }
 
-        .admin-layout {
-          display: flex;
-          min-height: calc(100vh - 64px); /* Subtract header height */
-        }
-
         .admin-content {
-          flex: 1;
+          margin-left: 250px;
           padding: 20px;
-          margin-left: 250px; /* Sidebar width */
-          background-color: white;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          min-height: 100vh;
         }
 
         @media (max-width: 768px) {
@@ -46,6 +52,6 @@ const Admin = () => {
       `}</style>
     </div>
   );
-};
+}
 
 export default Admin;
