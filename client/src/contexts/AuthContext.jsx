@@ -80,19 +80,43 @@ export function AuthProvider({ children }) {
 
   const handleLogin = async (userData) => {
     try {
+      console.log('Handling login with data:', userData);
+      
+      if (!userData || typeof userData !== 'object') {
+        throw new Error('Invalid login data: data is missing or not an object');
+      }
+
       const { token, user } = userData;
       
-      if (!token || !user) {
-        throw new Error('Invalid login data received');
+      if (!token || typeof token !== 'string') {
+        throw new Error('Invalid login data: token is missing or invalid');
       }
       
+      if (!user || typeof user !== 'object') {
+        throw new Error('Invalid login data: user data is missing or invalid');
+      }
+
+      if (!user._id || !user.email) {
+        throw new Error('Invalid login data: user data is incomplete');
+      }
+      
+      // Set authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Store data in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
+      // Update state
       setIsAuthenticated(true);
       setUser(user);
       setIsAdmin(user.email === ADMIN_EMAIL);
+
+      console.log('Login successful:', {
+        isAuthenticated: true,
+        isAdmin: user.email === ADMIN_EMAIL,
+        user: user
+      });
     } catch (error) {
       console.error('Login error:', error);
       handleLogout();

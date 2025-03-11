@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import config from '../config';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '', remember: false });
@@ -20,15 +21,37 @@ function Login() {
     try {
       let response;
       if (isSignup) {
-        response = await axios.post('/api/register', { ...form, name: form.email.split('@')[0] });
+        response = await axios.post(`${config.apiUrl}/api/register`, { 
+          ...form, 
+          name: form.email.split('@')[0] 
+        });
+        // For signup, wait for the response and then log in
+        response = await axios.post(`${config.apiUrl}/api/login`, {
+          email: form.email,
+          password: form.password
+        });
       } else {
-        response = await axios.post('/api/login', form);
+        response = await axios.post(`${config.apiUrl}/api/login`, {
+          email: form.email,
+          password: form.password
+        });
       }
-      login(response.data);
+
+      console.log('Login response:', response.data);
+      
+      if (!response.data || !response.data.token || !response.data.user) {
+        throw new Error('Invalid response from server');
+      }
+
+      await login(response.data);
       navigate('/');
     } catch (err) {
       console.error('Auth error:', err);
-      setError(err.response?.data?.error || 'Authentication failed');
+      setError(
+        err.response?.data?.error || 
+        err.message || 
+        'Authentication failed'
+      );
     } finally {
       setIsLoading(false);
     }
