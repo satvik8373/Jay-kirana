@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const path = require('path');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -91,31 +92,73 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+// Root route for health check
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Get port from environment and store in Express
 const PORT = process.env.PORT || 10000;
+app.set('port', PORT);
 
 const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
     
-    // Start server
+    // Create HTTP server
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-      console.log('MongoDB URI:', process.env.MONGODB_URI ? '**URI Set**' : 'Missing MONGODB_URI');
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`http://localhost:${PORT}`);
+      console.log('Environment:', process.env.NODE_ENV);
     });
 
     // Handle server errors
     server.on('error', (error) => {
-      console.error('Server error:', error);
-      if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use`);
-        process.exit(1);
+      if (error.syscall !== 'listen') {
+        throw error;
       }
+
+      const bind = typeof PORT === 'string'
+        ? 'Pipe ' + PORT
+        : 'Port ' + PORT;
+
+      // Handle specific listen errors with friendly messages
+      switch (error.code) {
+        case 'EACCES':
+          console.error(bind + ' requires elevated privileges');
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          console.error(bind + ' is already in use');
+          process.exit(1);
+          break;
+        default:
+          throw error;
+      }
+    });
+
+    // Log when server starts listening
+    server.on('listening', () => {
+      const addr = server.address();
+      const bind = typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
+      console.log('Listening on ' + bind);
     });
 
   } catch (error) {
