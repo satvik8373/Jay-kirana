@@ -14,13 +14,24 @@ export function AuthProvider({ children }) {
     return !!localStorage.getItem('token');
   });
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      localStorage.removeItem('user'); // Clear invalid data
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser).email === ADMIN_EMAIL : false;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser).email === ADMIN_EMAIL : false;
+    } catch (error) {
+      console.error('Error parsing user data for admin check:', error);
+      return false;
+    }
   });
 
   // Set up axios interceptor for token
@@ -38,20 +49,24 @@ export function AuthProvider({ children }) {
   // Initialize auth state from localStorage and verify with server
   useEffect(() => {
     const verifyAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       try {
-          const response = await axios.get(`${config.apiUrl}/user/me`);
-          setUser(response.data);
-          setIsAuthenticated(true);
-          setIsAdmin(response.data.email === ADMIN_EMAIL);
-        localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-          console.error('Error verifying token:', error);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${config.apiUrl}/api/user/me`);
+        const userData = response.data;
+        
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsAdmin(userData.email === ADMIN_EMAIL);
+        
+        // Update localStorage with fresh data
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch (error) {
+        console.error('Error verifying token:', error);
         if (error.response?.status === 401) {
           handleLogout();
         }
@@ -64,7 +79,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const handleLogin = async (userData) => {
+    try {
       const { token, user } = userData;
+      
+      if (!token || !user) {
+        throw new Error('Invalid login data received');
+      }
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       localStorage.setItem('token', token);
@@ -73,22 +93,27 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
       setUser(user);
       setIsAdmin(user.email === ADMIN_EMAIL);
+    } catch (error) {
+      console.error('Login error:', error);
+      handleLogout();
+      throw error;
+    }
   };
 
   const handleLogout = () => {
-      delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
+    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
     setIsAuthenticated(false);
     setUser(null);
     setIsAdmin(false);
   };
 
   const contextValue = {
-      isAuthenticated, 
-      user, 
-      isAdmin, 
+    isAuthenticated, 
+    user, 
+    isAdmin, 
     loading,
     login: handleLogin,
     logout: handleLogout
