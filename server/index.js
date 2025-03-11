@@ -120,14 +120,36 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV,
+    cors: {
+      allowedOrigins: corsOptions.origin,
+      credentials: corsOptions.credentials
+    }
+  });
+});
+
+// Handle 404 errors for API routes
+app.use('/api/*', (req, res) => {
+  console.log('API 404:', req.originalUrl);
+  res.status(404).json({ 
+    error: 'Not Found',
+    path: req.originalUrl,
+    method: req.method
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  console.error('Error:', {
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    path: req.path,
+    method: req.method
+  });
+  res.status(err.status || 500).json({ 
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+  });
 });
 
 // Get port from environment and store in Express
