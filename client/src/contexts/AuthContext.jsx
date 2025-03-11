@@ -25,13 +25,21 @@ export function AuthProvider({ children }) {
 
   // Set up axios interceptor for token
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
 
     return () => {
-      delete axios.defaults.headers.common['Authorization'];
+      axios.interceptors.request.eject(interceptor);
     };
   }, []);
 
@@ -45,13 +53,13 @@ export function AuthProvider({ children }) {
       }
 
       try {
-          const response = await axios.get(`${config.apiUrl}/user/me`);
-          setUser(response.data);
-          setIsAuthenticated(true);
-          setIsAdmin(response.data.email === ADMIN_EMAIL);
+        const response = await axios.get(`${config.apiUrl}/user/me`);
+        setUser(response.data);
+        setIsAuthenticated(true);
+        setIsAdmin(response.data.email === ADMIN_EMAIL);
         localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-          console.error('Error verifying token:', error);
+      } catch (error) {
+        console.error('Error verifying token:', error);
         if (error.response?.status === 401) {
           handleLogout();
         }
@@ -64,31 +72,26 @@ export function AuthProvider({ children }) {
   }, []);
 
   const handleLogin = async (userData) => {
-      const { token, user } = userData;
-      
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      setIsAuthenticated(true);
-      setUser(user);
-      setIsAdmin(user.email === ADMIN_EMAIL);
+    const { token, user } = userData;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    setIsAuthenticated(true);
+    setUser(user);
+    setIsAdmin(user.email === ADMIN_EMAIL);
   };
 
   const handleLogout = () => {
-      delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);
     setIsAdmin(false);
   };
 
   const contextValue = {
-      isAuthenticated, 
-      user, 
-      isAdmin, 
+    isAuthenticated,
+    user,
+    isAdmin,
     loading,
     login: handleLogin,
     logout: handleLogout
