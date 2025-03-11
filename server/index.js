@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
+const adminRoutes = require('./routes/admin');
 const path = require('path');
 const mongoose = require('mongoose');
 
@@ -31,13 +32,11 @@ const corsOptions = {
     console.log('Request origin:', origin);
     console.log('Environment:', process.env.NODE_ENV);
     
-    // In development, allow all origins
     if (process.env.NODE_ENV === 'development') {
       callback(null, true);
       return;
     }
     
-    // In production, check against allowed origins
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -67,7 +66,6 @@ app.use((req, res, next) => {
     env: process.env.NODE_ENV
   });
 
-  // Set CORS headers based on environment
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
   } else {
@@ -80,7 +78,6 @@ app.use((req, res, next) => {
     }
   }
 
-  // Set other security headers
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -115,24 +112,48 @@ if (process.env.NODE_ENV === 'development') {
 
 // Routes
 app.use('/api', apiRoutes);
+app.use('/admin', adminRoutes);
 
 // Root route for health check
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    environment: process.env.NODE_ENV
+  });
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Not Found',
+    path: req.path
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
+  console.error('Error:', {
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    path: req.path,
+    method: req.method
+  });
+
+  res.status(err.status || 500).json({ 
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
+    path: req.path
+  });
 });
 
 // Get port from environment and store in Express
