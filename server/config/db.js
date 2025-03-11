@@ -8,7 +8,34 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
-    const conn = await mongoose.connect(uri);
+    // Validate MongoDB URI format
+    if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+      throw new Error('Invalid MongoDB URI format. Must start with mongodb:// or mongodb+srv://');
+    }
+
+    // Parse and validate the URI
+    try {
+      // Create a URL object to validate the URI format
+      const mongoURL = new URL(uri);
+      
+      // Log connection attempt (without exposing credentials)
+      console.log('Attempting to connect to MongoDB at:', 
+        `${mongoURL.protocol}//${mongoURL.host}${mongoURL.pathname}`);
+      
+    } catch (urlError) {
+      throw new Error(`Invalid MongoDB URI format: ${urlError.message}`);
+    }
+
+    // Configure connection options
+    const options = {
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s
+      socketTimeoutMS: 45000, // Close sockets after 45s
+      family: 4, // Use IPv4, skip trying IPv6
+      retryWrites: true,
+      w: 'majority'
+    };
+
+    const conn = await mongoose.connect(uri, options);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
@@ -32,7 +59,15 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);
-    throw error; // Propagate error to be handled by the caller
+    // Add more detailed error logging
+    if (error.message.includes('ENOTFOUND')) {
+      console.error('Could not resolve MongoDB host. Please check your connection string and network connectivity.');
+    } else if (error.message.includes('Authentication failed')) {
+      console.error('MongoDB authentication failed. Please check your username and password.');
+    } else if (error.message.includes('Invalid MongoDB URI format')) {
+      console.error('Please check your MongoDB connection string format.');
+    }
+    throw error;
   }
 };
 
