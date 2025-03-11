@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
 import Home from './pages/Home';
 import Profile from './components/Profile';
-import Admin from './components/admin/Admin';
+import Admin from './pages/Admin';
 import Login from './components/Login';
 import Register from './components/Register';
 import Cart from './components/Cart';
@@ -25,29 +25,20 @@ const router = createBrowserRouter([
       },
       { 
         path: 'admin',
-        element: <AdminRoute><Admin /></AdminRoute>
+        element: <AdminRoute><Admin /></AdminRoute>,
+        children: [
+          { index: true, element: <AdminDashboard /> },
+          { path: 'orders', element: <Orders /> },
+          { path: 'products', element: <Products /> },
+          { path: 'users', element: <Users /> },
+          { path: 'email-marketing', element: <EmailMarketing /> }
+        ]
       },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { 
         path: 'cart',
         element: <ProtectedRoute><Cart /></ProtectedRoute>
-      },
-      { 
-        path: 'admin/orders',
-        element: <AdminRoute><Orders /></AdminRoute>
-      },
-      { 
-        path: 'admin/products',
-        element: <AdminRoute><Products /></AdminRoute>
-      },
-      { 
-        path: 'admin/users',
-        element: <AdminRoute><Users /></AdminRoute>
-      },
-      { 
-        path: 'admin/email-marketing',
-        element: <AdminRoute><EmailMarketing /></AdminRoute>
       },
       {
         path: '*',

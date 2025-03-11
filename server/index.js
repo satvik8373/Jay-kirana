@@ -100,7 +100,7 @@ app.use('/api', apiRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -126,7 +126,7 @@ app.get('*', (req, res, next) => {
   console.log('Serving React app for path:', req.path);
   
   // Send the React app's index.html
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'), err => {
+  res.sendFile(path.join(__dirname, 'dist/index.html'), err => {
     if (err) {
       console.error('Error sending file:', err);
       next(err);

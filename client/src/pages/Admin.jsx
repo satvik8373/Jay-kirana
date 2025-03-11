@@ -1,33 +1,20 @@
-import React, { useState } from 'react';
-import AddProduct from '../components/admin/AddProduct';
-import ManageProducts from '../components/admin/ManageProducts';
-import Orders from '../components/admin/Orders';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/admin/Sidebar';
-import EmailMarketing from '../components/EmailMarketing';
+import Header from '../components/admin/Header';
+import AdminDashboard from '../components/admin/AdminDashboard';
 
-function Admin() {
-  const [activeSection, setActiveSection] = useState('orders');
-
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'orders':
-        return <Orders />;
-      case 'add-product':
-        return <AddProduct />;
-      case 'manage-products':
-        return <ManageProducts />;
-      case 'email-marketing':
-        return <EmailMarketing />;
-      default:
-        return <Orders />;
-    }
-  };
-
+const Admin = () => {
   return (
     <div className="admin">
-      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-      <div className="admin-content">
-        {renderSection()}
+      <Header />
+      <div className="admin-layout">
+        <Sidebar />
+        <main className="admin-content">
+          <Outlet />
+          {/* Show dashboard when no sub-route is selected */}
+          {window.location.pathname === '/admin' && <AdminDashboard />}
+        </main>
       </div>
 
       <style jsx>{`
@@ -36,10 +23,17 @@ function Admin() {
           background-color: #f5f5f5;
         }
 
+        .admin-layout {
+          display: flex;
+          min-height: calc(100vh - 64px); /* Subtract header height */
+        }
+
         .admin-content {
-          margin-left: 250px;
+          flex: 1;
           padding: 20px;
-          min-height: 100vh;
+          margin-left: 250px; /* Sidebar width */
+          background-color: white;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         @media (max-width: 768px) {
@@ -52,6 +46,6 @@ function Admin() {
       `}</style>
     </div>
   );
-}
+};
 
 export default Admin;

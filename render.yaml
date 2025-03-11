@@ -8,6 +8,8 @@ services:
       npm run build
       cd ../server
       npm install
+      mkdir -p dist
+      cp -r ../client/dist ./dist
     startCommand: cd server && node index.js
     envVars:
       - key: NODE_ENV
@@ -23,7 +25,7 @@ services:
       paths:
         - client/**
         - server/**
-    staticPublishPath: ./client/dist
+    staticPublishPath: ./server/dist
     routes:
       - type: rewrite
         source: /api/*
