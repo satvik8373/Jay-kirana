@@ -1,139 +1,132 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaBox, FaPlus, FaShoppingBag, FaEnvelope } from 'react-icons/fa';
+import { FaBox, FaPlus, FaShoppingCart, FaEnvelope } from 'react-icons/fa';
 
-function Sidebar() {
-  const location = useLocation();
-  const currentPath = location.pathname.split('/').pop();
-
+function Sidebar({ activeSection, setActiveSection }) {
   const menuItems = [
-    { id: 'orders', icon: FaShoppingBag, label: 'Orders', path: '/admin/orders' },
-    { id: 'add-product', icon: FaPlus, label: 'Add Product', path: '/admin/add-product' },
-    { id: 'manage-products', icon: FaBox, label: 'Manage Products', path: '/admin/manage-products' },
-    { id: 'email-marketing', icon: FaEnvelope, label: 'Email Marketing', path: '/admin/email-marketing' }
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: FaShoppingCart
+    },
+    {
+      id: 'add-product',
+      label: 'Add Product',
+      icon: FaPlus
+    },
+    {
+      id: 'manage-products',
+      label: 'Manage Products',
+      icon: FaBox
+    },
+    {
+      id: 'email-marketing',
+      label: 'Email Marketing',
+      icon: FaEnvelope
+    }
   ];
 
   return (
     <div className="sidebar">
-      <div className="sidebar-header">
+      <div className="logo">
         <h2>Admin Panel</h2>
       </div>
-      <nav className="sidebar-nav">
-        {menuItems.map(item => {
-          const Icon = item.icon;
-          const isActive = currentPath === item.id || 
-            (currentPath === '' && item.id === 'orders');
-          
-          return (
-            <Link
-              key={item.id}
-              to={item.path}
-              className={`nav-item ${isActive ? 'active' : ''}`}
-            >
-              <Icon className="nav-icon" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+      <nav>
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(item.id)}
+          >
+            {item.icon && <item.icon />} {item.label}
+          </button>
+        ))}
       </nav>
 
       <style jsx>{`
         .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
           width: 250px;
           height: 100vh;
-          background: white;
-          position: fixed;
-          left: 0;
-          top: 0;
-          padding-top: 60px;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          z-index: 100;
-        }
-
-        .sidebar-header {
+          background-color: #1a237e;
+          color: white;
           padding: 20px;
-          border-bottom: 1px solid #eee;
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+          z-index: 1000;
         }
 
-        .sidebar-header h2 {
-          color: #1a237e;
+        .logo {
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo h2 {
           margin: 0;
           font-size: 1.5rem;
+          font-weight: 600;
         }
 
-        .sidebar-nav {
-          padding: 20px 0;
+        nav {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .nav-item {
           display: flex;
           align-items: center;
-          padding: 15px 20px;
-          color: #666;
-          text-decoration: none;
+          gap: 10px;
+          padding: 12px 20px;
+          border: none;
+          background: none;
+          color: white;
+          font-size: 1rem;
+          cursor: pointer;
+          border-radius: 8px;
           transition: all 0.3s ease;
-          border-left: 4px solid transparent;
+          width: 100%;
+          text-align: left;
         }
 
         .nav-item:hover {
-          background: #f5f5f5;
-          color: #1a237e;
-          border-left-color: #1a237e;
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .nav-item.active {
-          background: #e8eaf6;
-          color: #1a237e;
-          border-left-color: #1a237e;
-        }
-
-        .nav-icon {
-          margin-right: 10px;
-          font-size: 1.2rem;
+          background-color: rgba(255, 255, 255, 0.2);
+          font-weight: 600;
         }
 
         @media (max-width: 768px) {
           .sidebar {
+            top: auto;
+            bottom: 0;
             width: 100%;
             height: auto;
-            position: fixed;
-            bottom: 0;
-            top: auto;
-            padding-top: 0;
-            background: white;
+            padding: 10px;
           }
 
-          .sidebar-header {
+          .logo {
             display: none;
           }
 
-          .sidebar-nav {
-            padding: 0;
-            display: flex;
+          nav {
+            flex-direction: row;
             justify-content: space-around;
           }
 
           .nav-item {
             flex-direction: column;
-            align-items: center;
-            padding: 10px;
-            border-left: none;
-            border-top: 3px solid transparent;
+            padding: 8px;
             font-size: 0.8rem;
+            gap: 5px;
+            text-align: center;
           }
 
-          .nav-item.active {
-            border-left: none;
-            border-top-color: #1a237e;
-          }
-
-          .nav-icon {
-            margin-right: 0;
-            margin-bottom: 5px;
-          }
-
-          span {
-            display: none;
+          .nav-item svg {
+            font-size: 1.2rem;
           }
         }
       `}</style>

@@ -1,37 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a237e" />
-    <meta name="description" content="Jay Kirana - Your Online Grocery Store" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="robots" content="index, follow" />
-    <base href="/" />
-    <title>Jay Kirana</title>
-    <script>
-      // Fallback for direct navigation
-      (function() {
-        try {
-          const path = window.location.pathname;
-          const isDirectNavigation = !window.performance.navigation.type;
-          if (path !== '/' && !path.includes('.') && isDirectNavigation) {
-            sessionStorage.setItem('lastPath', path);
-          }
-        } catch (e) {
-          console.error('Navigation tracking error:', e);
-        }
-      })();
-    </script>
+    <title>Jay Kirana - Your Grocery Store</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <noscript>
-      <div style="text-align: center; padding: 20px;">
-        Please enable JavaScript to run this application.
-      </div>
-    </noscript>
   </body>
 </html>

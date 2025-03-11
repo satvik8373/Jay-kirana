@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PrintOrder from './PrintOrder';
-import config from '../../config';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: config.apiUrl,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -80,7 +79,7 @@ function Orders() {
       setIsLoading(true);
       setError(null);
       
-      const response = await api.get('/api/orders');
+      const response = await api.get('/orders');
       
       if (!response.data) {
         throw new Error('No data received from server');
@@ -145,7 +144,7 @@ function Orders() {
 
       // Prepare request data
       const requestData = { status: newStatus };
-      const requestUrl = `/api/orders/${orderId}/status`;
+      const requestUrl = `/orders/${orderId}/status`;
 
       console.log('Sending update request:', {
         url: requestUrl,

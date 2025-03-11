@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import config from '../../config';
-import { toast } from 'react-toastify';
 import { FaPlus, FaEdit, FaTrash, FaImage } from 'react-icons/fa';
 
+// Configure axios with base URL
+const api = axios.create({
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 function AddProduct() {
-  const navigate = useNavigate();
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: '',
+    price: '',
+    stock: '',
+    image: ''
+  });
+  
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: '',
-    stock: '',
-    image: null
-  });
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -31,36 +34,29 @@ function AddProduct() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/categories`, {
-        withCredentials: true
-      });
+      console.log('Fetching categories...');
+      const response = await api.get('/api/categories');
+      console.log('Categories response:', response.data);
       setCategories(response.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      toast.error('Failed to load categories');
+    } catch (err) {
+      console.error('Error fetching categories:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to load categories');
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'image') {
-      setFormData(prev => ({
-        ...prev,
-        image: files[0]
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewProduct(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
-    if (name === 'image' && files[0]) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(files[0]);
+    if (name === 'image' && value) {
+      setImagePreview(value);
     }
   };
 
@@ -79,84 +75,99 @@ function AddProduct() {
     setError(null);
   };
 
-  const handleSubmit = async (e) => {
+  const addProduct = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     setLoading(true);
 
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null) {
-          data.append(key, formData[key]);
-        }
-      });
+      if (!newProduct.name || !newProduct.category || !newProduct.price || !newProduct.stock) {
+        setError('All fields are required');
+        return;
+      }
 
-      const response = await axios.post(`${config.apiUrl}/api/products`, data, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        withCredentials: true
-      });
+      const productData = {
+        ...newProduct,
+        price: parseFloat(newProduct.price),
+        stock: parseInt(newProduct.stock),
+        image: newProduct.image || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        packs
+      };
 
-      toast.success('Product added successfully!');
-      navigate('/admin/manage-products');
-    } catch (error) {
-      console.error('Error adding product:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to add product';
-      toast.error(errorMessage);
+      const response = await api.post('/api/products', productData);
+      setSuccess('Product added successfully');
+      setNewProduct({ name: '', category: '', price: '', stock: '', image: '' });
+      setPacks([]);
+      setImagePreview(null);
+    } catch (err) {
+      console.error('Error adding product:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to add product');
     } finally {
       setLoading(false);
     }
   };
 
   const addCategory = async () => {
-    if (!newCategory.trim()) return;
+    if (!newCategory.trim()) {
+      setError('Category name is required');
+      return;
+    }
+
     try {
-      const response = await axios.post(`${config.apiUrl}/api/categories`, {
-        name: newCategory
-      });
-      if (response.status === 201) {
-        setCategories([...categories, response.data]);
-        setNewCategory('');
-        setSuccess('Category added successfully');
-      }
+      console.log('Attempting to add category:', newCategory);
+      const response = await api.post('/api/categories', { name: newCategory });
+      console.log('Category added successfully:', response.data);
+      setCategories([...categories, response.data]);
+      setNewCategory('');
+      setSuccess('Category added successfully');
+      setError(null);
     } catch (err) {
-      console.error('Error adding category:', err);
-      setError('Failed to add category: ' + (err.response?.data?.error || err.message));
+      console.error('Error adding category:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to add category');
       setSuccess(null);
     }
   };
 
-  const updateCategory = async (id, name) => {
+  const updateCategory = async (id, newName) => {
     try {
-      const response = await axios.put(`${config.apiUrl}/api/categories/${id}`, {
-        name
-      });
-      if (response.status === 200) {
-        setCategories(categories.map(cat =>
-          cat._id === id ? { ...cat, name } : cat
-        ));
-        setEditingCategory(null);
-        setSuccess('Category updated successfully');
-      }
+      const response = await api.put(`/api/categories/${id}`, { name: newName });
+      const updatedCategories = categories.map(cat => 
+        cat._id === id ? response.data : cat
+      );
+      setCategories(updatedCategories);
+      setEditingCategory(null);
+      setSuccess('Category updated successfully');
     } catch (err) {
-      console.error('Error updating category:', err);
-      setError('Failed to update category: ' + (err.response?.data?.error || err.message));
+      console.error('Error updating category:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to update category');
     }
   };
 
   const deleteCategory = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      try {
-        const response = await axios.delete(`${config.apiUrl}/api/categories/${id}`);
-        if (response.status === 200) {
-          setCategories(categories.filter(cat => cat._id !== id));
-          setSuccess('Category deleted successfully');
-        }
-      } catch (err) {
-        console.error('Error deleting category:', err);
-        setError('Failed to delete category: ' + (err.response?.data?.error || err.message));
-      }
+    try {
+      await api.delete(`/api/categories/${id}`);
+      setCategories(categories.filter(cat => cat._id !== id));
+      setSuccess('Category deleted successfully');
+    } catch (err) {
+      console.error('Error deleting category:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to delete category');
     }
   };
 
@@ -170,92 +181,77 @@ function AddProduct() {
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
 
-          <form onSubmit={handleSubmit} className="product-form">
+          <form onSubmit={addProduct} className="product-form">
             <div className="form-group">
-              <label htmlFor="name">Product Name</label>
+              <label>Product Name</label>
               <input
                 type="text"
-                id="name"
                 name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
+                value={newProduct.name}
+                onChange={handleInputChange}
+                placeholder="Enter product name"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="price">Price</label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="category">Category</label>
+              <label>Category</label>
               <select
-                id="category"
                 name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
+                value={newProduct.category}
+                onChange={handleInputChange}
               >
-                <option value="">Select a category</option>
-                {categories.map(category => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
+                <option value="">Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat.name}>{cat.name}</option>
                 ))}
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="stock">Stock</label>
-              <input
-                type="number"
-                id="stock"
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                min="0"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="image">Product Image</label>
-              <input
-                type="file"
-                id="image"
-                name="image"
-                onChange={handleChange}
-                accept="image/*"
-                required
-              />
-            </div>
-
-            {imagePreview && (
-              <div className="image-preview">
-                <img src={imagePreview} alt="Preview" />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Price (₹)</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={newProduct.price}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                />
               </div>
-            )}
+
+              <div className="form-group">
+                <label>Stock</label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={newProduct.stock}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Image URL</label>
+              <div className="image-input">
+                <input
+                  type="text"
+                  name="image"
+                  value={newProduct.image}
+                  onChange={handleInputChange}
+                  placeholder="Enter image URL"
+                />
+                <FaImage className="image-icon" />
+              </div>
+              {imagePreview && (
+                <div className="image-preview">
+                  <img src={imagePreview} alt="Preview" />
+                </div>
+              )}
+            </div>
 
             <div className="form-group">
               <label>Add Pack</label>
@@ -286,8 +282,8 @@ function AddProduct() {
               ))}
             </div>
 
-            <button type="submit" disabled={loading}>
-              {loading ? 'Adding Product...' : 'Add Product'}
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Adding...' : 'Add Product'}
             </button>
           </form>
         </div>
@@ -408,6 +404,18 @@ function AddProduct() {
         input:focus, select:focus {
           border-color: #1a237e;
           box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+        }
+
+        .image-input {
+          position: relative;
+        }
+
+        .image-icon {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #666;
         }
 
         .image-preview {

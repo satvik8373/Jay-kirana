@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductList from '../components/ProductList';
 import { FaLeaf, FaShieldAlt, FaTruck, FaClock } from 'react-icons/fa';
-import config from '../config';
 
 function Home({ addToCart }) {
   const [products, setProducts] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
@@ -15,25 +12,10 @@ function Home({ addToCart }) {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const response = await axios.get(`${config.apiUrl}/api/products`);
-      
-      if (!response.data) {
-        throw new Error('No products found');
-      }
-      
+      const response = await axios.get('/api/products');
       setProducts(response.data);
     } catch (err) {
       console.error('Error fetching products:', err);
-      setError(
-        err.response?.status === 404
-          ? 'No products found'
-          : 'Failed to load products. Please try again later.'
-      );
-      setProducts([]);
-    } finally {
-      setLoading(false);
     }
   };
 

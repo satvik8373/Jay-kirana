@@ -88,10 +88,10 @@ Check out our festive deals and exclusive discounts below!`,
         }
 
         const [customersRes, productsRes] = await Promise.all([
-          axios.get(`${config.apiUrl}/api/users/all`, {
+          axios.get(`${config.apiUrl}/users/all`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get(`${config.apiUrl}/api/products`)
+          axios.get(`${config.apiUrl}/products`)
         ]);
 
         if (customersRes.data) {
@@ -135,7 +135,7 @@ Check out our festive deals and exclusive discounts below!`,
       }
 
       const response = await axios.post(
-        `${config.apiUrl}/api/admin/send-marketing-email`,
+        `${config.apiUrl}/admin/send-marketing-email`,
         formData,
         {
           headers: {

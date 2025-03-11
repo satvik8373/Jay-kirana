@@ -1,7 +1,6 @@
 import React from 'react';
 import { FaShoppingCart, FaLeaf, FaFireAlt, FaCookie, FaWineBottle } from 'react-icons/fa';
 import { GiMedicines } from 'react-icons/gi';
-import config from '../config';
 
 function ProductCard({ product, addToCart }) {
   // Default category images and colors
@@ -48,18 +47,6 @@ function ProductCard({ product, addToCart }) {
   const category = product.category.toLowerCase();
   const config = categoryConfig[category] || defaultConfig;
   const Icon = config.icon;
-
-  const getProductImageUrl = () => {
-    if (!product.image) return null;
-    
-    // If the image is a full URL, use it directly
-    if (product.image.startsWith('http')) {
-      return product.image;
-    }
-    
-    // Otherwise, construct the URL using the uploadUrl from config
-    return `${config.uploadUrl}/${product.image}`;
-  };
 
   const handleAddToCart = (e) => {
     const productCard = e.currentTarget.closest('.product-card');
@@ -122,7 +109,7 @@ function ProductCard({ product, addToCart }) {
     <div className="product-card">
       <div className="product-image-container">
         <img 
-          src={getProductImageUrl() || config.image}
+          src={product.image || config.image}
           alt={product.name}
           className="product-image"
           onError={(e) => {
