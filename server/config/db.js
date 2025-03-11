@@ -8,21 +8,29 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
+    // Remove any surrounding quotes and trim whitespace
+    const cleanUri = uri.replace(/^["'](.+(?=["']$))["']$/, '$1').trim();
+    
+    console.log('Checking MongoDB URI format...');
+    
     // Validate MongoDB URI format
-    if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+    if (!cleanUri.startsWith('mongodb://') && !cleanUri.startsWith('mongodb+srv://')) {
+      console.error('Raw URI:', uri);
+      console.error('Cleaned URI:', cleanUri);
       throw new Error('Invalid MongoDB URI format. Must start with mongodb:// or mongodb+srv://');
     }
 
     // Parse and validate the URI
     try {
       // Create a URL object to validate the URI format
-      const mongoURL = new URL(uri);
+      const mongoURL = new URL(cleanUri);
       
       // Log connection attempt (without exposing credentials)
       console.log('Attempting to connect to MongoDB at:', 
         `${mongoURL.protocol}//${mongoURL.host}${mongoURL.pathname}`);
       
     } catch (urlError) {
+      console.error('URL parsing error:', urlError);
       throw new Error(`Invalid MongoDB URI format: ${urlError.message}`);
     }
 
@@ -35,7 +43,8 @@ const connectDB = async () => {
       w: 'majority'
     };
 
-    const conn = await mongoose.connect(uri, options);
+    console.log('Connecting to MongoDB...');
+    const conn = await mongoose.connect(cleanUri, options);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
