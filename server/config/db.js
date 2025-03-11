@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
 const connectDB = async () => {
@@ -34,17 +35,23 @@ const connectDB = async () => {
       throw new Error(`Invalid MongoDB URI format: ${urlError.message}`);
     }
 
-    // Configure connection options
+    // Configure Mongoose options
     const options = {
-      serverSelectionTimeoutMS: 10000, // Timeout after 10s
-      socketTimeoutMS: 45000, // Close sockets after 45s
-      family: 4, // Use IPv4, skip trying IPv6
-      retryWrites: true,
-      w: 'majority'
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
     };
 
     console.log('Connecting to MongoDB...');
+    
+    // Create connection
     const conn = await mongoose.connect(cleanUri, options);
+
+    // Verify connection with a ping
+    await conn.connection.db.admin().command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
