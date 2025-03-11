@@ -18,6 +18,23 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Ensure URL starts with /api
+    if (config.url && !config.url.startsWith('/api')) {
+      config.url = `/api${config.url}`;
+    }
+
+    // Log outgoing request in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Outgoing request:', {
+        method: config.method,
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        data: config.data
+      });
+    }
+
     return config;
   },
   (error) => {
@@ -27,13 +44,33 @@ api.interceptors.request.use(
 
 // Add response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful response in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Response received:', {
+        status: response.status,
+        data: response.data,
+        url: response.config.url
+      });
+    }
+    return response;
+  },
   async (error) => {
+    // Log error response
+    console.error('Response error:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url
+    });
+
     if (error.response) {
       // Handle specific error cases
       switch (error.response.status) {
         case 401:
-          // Handle unauthorized error (e.g., clear token and redirect to login)
+          // Handle unauthorized error
           localStorage.removeItem('token');
           window.location.href = '/login';
           break;
@@ -84,7 +121,10 @@ export const apiService = {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
-  })
+  }),
+
+  // Admin
+  getAllUsers: () => api.get(config.endpoints.users)
 };
 
 export default api; 
