@@ -1237,4 +1237,30 @@ router.get('/uploads/marketing/:filename', async (req, res) => {
   }
 });
 
+// Debug middleware for API routes
+router.use((req, res, next) => {
+  console.log('API Request:', {
+    method: req.method,
+    path: req.path,
+    body: req.body,
+    query: req.query,
+    params: req.params,
+    headers: {
+      authorization: req.headers.authorization ? 'Present' : 'Missing',
+      'content-type': req.headers['content-type']
+    }
+  });
+  next();
+});
+
+// Test endpoint to verify API is working
+router.get('/test', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'API is working',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
+
 module.exports = router;

@@ -1,7 +1,7 @@
 const config = {
   apiUrl: import.meta.env.MODE === 'production'
-    ? 'https://jay-kirana-api.onrender.com'
-    : 'http://localhost:5000',
+    ? 'https://jay-kirana-api.onrender.com/api'
+    : 'http://localhost:5000/api',
   uploadUrl: import.meta.env.MODE === 'production'
     ? 'https://jay-kirana-api.onrender.com/uploads'
     : 'http://localhost:5000/uploads',

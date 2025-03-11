@@ -93,23 +93,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Debug middleware (only in development)
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`, {
-      body: req.body,
-      query: req.query,
-      params: req.params
-    });
-    next();
-  });
-}
-
 // Routes
 app.use('/api', apiRoutes);
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Root route for health check
 app.get('/', (req, res) => {
@@ -120,8 +108,32 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
   });
+});
+
+// Catch-all route for API endpoints
+app.use('/api/*', (req, res) => {
+  console.log('404 API route not found:', req.originalUrl);
+  res.status(404).json({ 
+    error: 'API endpoint not found',
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
+// Handle SPA routes for client-side routing
+app.get('*', (req, res) => {
+  if (req.accepts('html')) {
+    res.status(200).json({ 
+      status: 'ok', 
+      message: 'API Server - For UI, please visit the client URL' 
+    });
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
 });
 
 // Error handling middleware
