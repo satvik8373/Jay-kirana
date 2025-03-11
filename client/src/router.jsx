@@ -10,6 +10,7 @@ import Orders from './components/admin/Orders';
 import Products from './components/admin/Products';
 import Users from './components/admin/Users';
 import EmailMarketing from './components/EmailMarketing';
+import AdminDashboard from './components/admin/AdminDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
 
