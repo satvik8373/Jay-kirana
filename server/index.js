@@ -121,55 +121,14 @@ const startServer = async () => {
     await connectDB();
     
     // Create HTTP server
-    const server = app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
-      console.log(`http://localhost:${PORT}`);
       console.log('Environment:', process.env.NODE_ENV);
-    });
-
-    // Handle server errors
-    server.on('error', (error) => {
-      if (error.syscall !== 'listen') {
-        throw error;
-      }
-
-      const bind = typeof PORT === 'string'
-        ? 'Pipe ' + PORT
-        : 'Port ' + PORT;
-
-      // Handle specific listen errors with friendly messages
-      switch (error.code) {
-        case 'EACCES':
-          console.error(bind + ' requires elevated privileges');
-          process.exit(1);
-          break;
-        case 'EADDRINUSE':
-          console.error(bind + ' is already in use');
-          process.exit(1);
-          break;
-        default:
-          throw error;
-      }
-    });
-
-    // Log when server starts listening
-    server.on('listening', () => {
-      const addr = server.address();
-      const bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
-      console.log('Listening on ' + bind);
     });
 
   } catch (error) {
     console.error('Failed to start server:', error);
-    // Don't exit immediately in production, try to reconnect
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Attempting to reconnect in 5 seconds...');
-      setTimeout(startServer, 5000);
-    } else {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 
