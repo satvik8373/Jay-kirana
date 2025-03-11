@@ -4,7 +4,6 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const path = require('path');
-const mongoose = require('mongoose');
 
 const app = express();
 
@@ -15,18 +14,12 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
+      'http://localhost:5000',
       'http://localhost:5200',
-      'http://localhost:3000',
-      'http://localhost:5173',
+      'http://127.0.0.1:5000',
       'http://127.0.0.1:5200',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173'
+      'https://jay-kirana.onrender.com'
     ];
-    
-    // Add your Netlify URL to allowed origins in production
-    if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL) {
-      allowedOrigins.push(process.env.CLIENT_URL);
-    }
     
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
@@ -92,72 +85,30 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Root route for health check
-app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  res.status(500).json({ 
+    error: 'Server error',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
-
-// Get port from environment and store in Express
-const PORT = process.env.PORT || 10000;
-app.set('port', PORT);
+const PORT = process.env.PORT || 5200;
 
 const startServer = async () => {
-  let retries = 0;
-  const maxRetries = 3;
-
-  const tryConnect = async () => {
-    try {
-      // Connect to MongoDB
-      await connectDB();
-      
-      // Create HTTP server
-      const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server is running on port ${PORT}`);
-        console.log(`Server URL: http://0.0.0.0:${PORT}`);
-        console.log('Environment:', process.env.NODE_ENV);
-      });
-
-      // Handle server errors
-      server.on('error', (error) => {
-        if (error.code === 'EADDRINUSE') {
-          console.error(`Port ${PORT} is already in use`);
-          process.exit(1);
-        } else {
-          console.error('Server error:', error);
-        }
-      });
-
-    } catch (error) {
-      console.error(`Failed to start server (attempt ${retries + 1}/${maxRetries}):`, error.message);
-      
-      if (retries < maxRetries) {
-        retries++;
-        console.log(`Retrying in 5 seconds... (${retries}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        return tryConnect();
-      } else {
-        console.error('Max retries reached. Exiting...');
-        process.exit(1);
-      }
-    }
-  };
-
-  await tryConnect();
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
-// Start the server
 startServer(); 
