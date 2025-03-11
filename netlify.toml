@@ -1,5 +1,6 @@
 [build]
-  command = "cd client && npm install && npm run build"
+  base = "/"
+  command = "chmod +x build.sh && ./build.sh"
   publish = "client/dist"
   functions = "netlify/functions"
 
