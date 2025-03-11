@@ -29,6 +29,7 @@ const corsOptions = {
     if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
+      console.log('CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -80,7 +81,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5200;
+// Use port 10000 for production (Render.com) or 5200 for development
+const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 10000 : 5200);
 
 const startServer = async () => {
   try {
@@ -90,6 +92,7 @@ const startServer = async () => {
     // Start server
     app.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+      console.log(`API available at ${process.env.NODE_ENV === 'production' ? 'https://jay-kirana-api.onrender.com' : `http://localhost:${PORT}`}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

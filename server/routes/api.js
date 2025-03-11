@@ -119,46 +119,53 @@ router.post('/register', async (req, res) => {
 });
 
 // User Login (public)
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
+router.post('/users/login', async (req, res) => {
   try {
+    const { email, password } = req.body;
+
     // Validate input
     if (!email || !password) {
+      console.log('Login attempt failed: Missing credentials');
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('Login attempt failed: User not found -', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log('Login attempt failed: Invalid password -', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate token
+    // Generate JWT token
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
 
-    // Prepare user data (excluding sensitive information)
-    const userData = {
+    // Create user object without sensitive data
+    const userResponse = {
       _id: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.email === process.env.ADMIN_EMAIL
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      isAdmin: user.isAdmin
     };
 
-    // Send response
+    console.log('Login successful:', email);
     res.json({
+      message: 'Login successful',
       token,
-      user: userData
+      user: userResponse
     });
   } catch (error) {
     console.error('Login error:', error);
