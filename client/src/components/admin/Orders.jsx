@@ -80,7 +80,7 @@ function Orders() {
       setIsLoading(true);
       setError(null);
       
-      const response = await api.get('/orders');
+      const response = await api.get('/api/orders');
       
       if (!response.data) {
         throw new Error('No data received from server');
@@ -145,7 +145,7 @@ function Orders() {
 
       // Prepare request data
       const requestData = { status: newStatus };
-      const requestUrl = `/orders/${orderId}/status`;
+      const requestUrl = `/api/orders/${orderId}/status`;
 
       console.log('Sending update request:', {
         url: requestUrl,

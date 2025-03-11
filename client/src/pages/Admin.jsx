@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
 import Orders from '../components/admin/Orders';
@@ -7,6 +9,19 @@ import EmailMarketing from '../components/EmailMarketing';
 
 function Admin() {
   const [activeSection, setActiveSection] = useState('orders');
+  const { isAdmin, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (!isAdmin) {
+      navigate('/');
+      return;
+    }
+  }, [isAdmin, isAuthenticated, navigate]);
 
   const renderSection = () => {
     switch (activeSection) {
@@ -23,6 +38,10 @@ function Admin() {
     }
   };
 
+  if (!isAuthenticated || !isAdmin) {
+    return null;
+  }
+
   return (
     <div className="admin">
       <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
@@ -34,19 +53,20 @@ function Admin() {
         .admin {
           min-height: 100vh;
           background-color: #f5f5f5;
+          padding-top: 60px;
         }
 
         .admin-content {
           margin-left: 250px;
           padding: 20px;
-          min-height: 100vh;
+          min-height: calc(100vh - 60px);
         }
 
         @media (max-width: 768px) {
           .admin-content {
             margin-left: 0;
             padding: 10px;
-            margin-bottom: 70px; /* Space for mobile sidebar */
+            margin-bottom: 70px;
           }
         }
       `}</style>
