@@ -34,19 +34,14 @@ const connectDB = async () => {
       throw new Error(`Invalid MongoDB URI format: ${urlError.message}`);
     }
 
-    // Configure connection options
+    // Configure connection options with only supported options
     const options = {
       serverSelectionTimeoutMS: 60000, // Increase timeout to 60 seconds
       socketTimeoutMS: 45000, // Close sockets after 45s
       family: 4, // Use IPv4, skip trying IPv6
-      retryWrites: true,
-      w: 'majority',
-      connectTimeoutMS: 30000,
       maxPoolSize: 10,
       minPoolSize: 0,
-      maxIdleTimeMS: 10000,
-      useNewUrlParser: true,
-      useUnifiedTopology: true
+      maxIdleTimeMS: 10000
     };
 
     console.log('Connecting to MongoDB...');
