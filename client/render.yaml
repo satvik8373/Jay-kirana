@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: jay-kirana
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    envVars:
+      - key: VITE_API_URL
+        value: https://jay-kirana-api.onrender.com 

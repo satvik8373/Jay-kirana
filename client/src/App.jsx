@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import MobileHeader from './components/MobileHeader';
 import Footer from './components/Footer';
@@ -13,6 +13,22 @@ import Checkout from './components/Checkout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Profile from './components/Profile';
 import './index.css';
+
+// Route restoration component
+const RouteRestoration = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const lastPath = sessionStorage.getItem('lastPath');
+    if (lastPath && location.pathname === '/') {
+      navigate(lastPath);
+      sessionStorage.removeItem('lastPath');
+    }
+  }, [navigate, location]);
+
+  return null;
+};
 
 // NotFound component for 404 pages
 const NotFound = () => (
@@ -58,6 +74,7 @@ const NotFound = () => (
 
 function ProtectedRoute({ children, requireAdmin }) {
   const { isAuthenticated, isAdmin, loading } = useAuth();
+  const location = useLocation();
   
   if (loading) {
     return (
@@ -78,7 +95,7 @@ function ProtectedRoute({ children, requireAdmin }) {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: window.location.pathname }} />;
+    return <Navigate to="/login" state={{ from: location.pathname }} />;
   }
   
   if (requireAdmin && !isAdmin) {
@@ -178,6 +195,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <RouteRestoration />
         <ErrorBoundary>
           <div className="app">
             {isMobile ? (
