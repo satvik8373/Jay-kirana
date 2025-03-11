@@ -3,50 +3,30 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    let uri = process.env.MONGODB_URI;
+    const uri = process.env.MONGODB_URI;
     if (!uri) {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
+    // Log connection attempt (hiding sensitive info)
     console.log('Attempting to connect to MongoDB...');
-    
-    // Parse and reconstruct the URI to ensure proper encoding
-    try {
-      const [prefix, rest] = uri.split('://');
-      const [credentials, hostAndPath] = rest.split('@');
-      const [username, password] = credentials.split(':');
-      
-      // Properly encode the username and password
-      const encodedUsername = encodeURIComponent(username);
-      const encodedPassword = encodeURIComponent(password);
-      
-      // Reconstruct the URI with encoded components
-      uri = `${prefix}://${encodedUsername}:${encodedPassword}@${hostAndPath}`;
-      
-      // Log sanitized URI for debugging
-      const sanitizedUri = uri.replace(/:[^:@]+@/, ':****@');
-      console.log('Using connection string:', sanitizedUri);
-    } catch (parseError) {
-      console.error('Error parsing connection string:', parseError);
+    const sanitizedUri = uri.replace(/:([^:@]+)@/, ':****@');
+    console.log('Using connection string:', sanitizedUri);
+
+    // Validate connection string format
+    if (!uri.startsWith('mongodb+srv://') && !uri.startsWith('mongodb://')) {
       throw new Error('Invalid MongoDB connection string format');
     }
 
     const conn = await mongoose.connect(uri, {
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      maxIdleTimeMS: 30000,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      family: 4,
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s
+      socketTimeoutMS: 45000, // Close sockets after 45s
       retryWrites: true,
-      writeConcern: {
-        w: 'majority'
-      }
+      w: 'majority'
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    console.log('Database Name:', conn.connection.name);
-    console.log('MongoDB Driver Version:', mongoose.version);
+    console.log(`MongoDB Connected successfully to: ${conn.connection.host}`);
+    console.log(`Database name: ${conn.connection.name}`);
     
     // Add connection error handler
     mongoose.connection.on('error', (err) => {
@@ -60,11 +40,6 @@ const connectDB = async () => {
     // Add disconnection handler
     mongoose.connection.on('disconnected', () => {
       console.log('MongoDB disconnected');
-    });
-
-    // Add reconnection handler
-    mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
     });
 
     // Handle process termination
@@ -87,6 +62,14 @@ const connectDB = async () => {
       stack: error.stack,
       code: error.code
     });
+
+    // Provide more specific error messages
+    if (error.code === 'ENOTFOUND') {
+      console.error('Could not resolve MongoDB host. Please check your connection string and network connectivity.');
+    } else if (error.name === 'MongoServerError') {
+      console.error('MongoDB server error. Please check your credentials and database access settings.');
+    }
+
     throw error;
   }
 };

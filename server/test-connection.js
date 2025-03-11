@@ -1,42 +1,33 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-async function testConnection() {
+async function testMongoConnection() {
   try {
-    let uri = process.env.MONGODB_URI;
+    const uri = process.env.MONGODB_URI;
     if (!uri) {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
 
-    console.log('\nStep 1: Parsing connection string...');
-    const [prefix, rest] = uri.split('://');
-    const [credentials, hostAndPath] = rest.split('@');
-    const [username, password] = credentials.split(':');
-    
-    // Encode components
-    const encodedUsername = encodeURIComponent(username);
-    const encodedPassword = encodeURIComponent(password);
-    
-    // Reconstruct URI
-    uri = `${prefix}://${encodedUsername}:${encodedPassword}@${hostAndPath}`;
-    
-    // Log sanitized version
-    console.log('Connection string format:', uri.replace(/:[^:@]+@/, ':****@'));
-    console.log('Protocol:', prefix);
-    console.log('Username:', username);
-    console.log('Host:', hostAndPath.split('/')[0]);
-    console.log('Database:', hostAndPath.split('/')[1]?.split('?')[0] || 'default');
+    console.log('Testing MongoDB connection...');
+    const sanitizedUri = uri.replace(/:([^:@]+)@/, ':****@');
+    console.log('Connection string format:', sanitizedUri);
 
-    console.log('\nStep 2: Testing connection...');
+    // Parse the connection string to validate format
+    const url = new URL(uri);
+    console.log('Protocol:', url.protocol);
+    console.log('Hostname:', url.hostname);
+    console.log('Database:', url.pathname.substr(1) || 'default');
+
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
 
-    console.log('\nConnection successful! ✓');
-    console.log('Connected to:', conn.connection.host);
+    console.log('\nConnection test results:');
+    console.log('Status: Connected successfully');
+    console.log('Host:', conn.connection.host);
     console.log('Database:', conn.connection.name);
-    console.log('MongoDB version:', mongoose.version);
+    console.log('Port:', conn.connection.port || 'default');
 
     await mongoose.connection.close();
     console.log('\nConnection closed successfully');
@@ -47,10 +38,16 @@ async function testConnection() {
       message: error.message,
       code: error.code
     });
+
+    if (error.code === 'ENOTFOUND') {
+      console.error('\nCould not resolve MongoDB host. Please check:');
+      console.error('1. Your connection string format');
+      console.error('2. Network connectivity');
+      console.error('3. MongoDB Atlas status');
+    }
+
     process.exit(1);
   }
 }
 
-console.log('MongoDB Connection Test');
-console.log('=====================');
-testConnection(); 
+testMongoConnection(); 
