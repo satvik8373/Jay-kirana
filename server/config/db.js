@@ -9,14 +9,27 @@ const connectDB = async () => {
     }
 
     console.log('Attempting to connect to MongoDB...');
-    console.log('Connection string format check:', uri.startsWith('mongodb+srv://') ? 'Valid prefix' : 'Invalid prefix');
+    
+    // Extract hostname from URI for logging
+    const sanitizedUri = uri.replace(/:[^:@]+@/, ':****@');
+    console.log('Using connection string:', sanitizedUri);
 
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      family: 4,
+      retryWrites: true,
+      writeConcern: {
+        w: 'majority'
+      }
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log('Database Name:', conn.connection.name);
+    console.log('MongoDB Driver Version:', mongoose.version);
     
     // Add connection error handler
     mongoose.connection.on('error', (err) => {
@@ -30,6 +43,11 @@ const connectDB = async () => {
     // Add disconnection handler
     mongoose.connection.on('disconnected', () => {
       console.log('MongoDB disconnected');
+    });
+
+    // Add reconnection handler
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected');
     });
 
     // Handle process termination
