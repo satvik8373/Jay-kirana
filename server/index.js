@@ -15,22 +15,27 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
+      // Development URLs
       'http://localhost:5200',
       'http://localhost:3000',
       'http://localhost:5173',
       'http://127.0.0.1:5200',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
-      'https://jay-kirana.netlify.app', // Production client URL
-      'https://jay-kirana-api.onrender.com' // Production server URL
+      // Production URLs
+      'https://jay-kirana.onrender.com',
+      'https://jay-kirana-api.onrender.com'
     ];
     
-    // Add your Netlify URL to allowed origins in production
-    if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL) {
-      allowedOrigins.push(process.env.CLIENT_URL);
+    // Log the request origin
+    console.log('Request origin:', origin);
+    
+    if (process.env.NODE_ENV === 'development') {
+      callback(null, true);
+      return;
     }
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn('Blocked by CORS:', origin);
@@ -49,13 +54,21 @@ app.use(cors(corsOptions));
 
 // Security middleware
 app.use((req, res, next) => {
-  // Allow requests from any origin in development
   const origin = req.headers.origin;
+  
+  // Log the request details
+  console.log('Request details:', {
+    method: req.method,
+    path: req.path,
+    origin: origin,
+    env: process.env.NODE_ENV
+  });
+
   if (process.env.NODE_ENV === 'development') {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
-  } else if (origin) {
+  } else {
     const allowedOrigins = [
-      'https://jay-kirana.netlify.app',
+      'https://jay-kirana.onrender.com',
       'https://jay-kirana-api.onrender.com'
     ];
     if (allowedOrigins.includes(origin)) {
