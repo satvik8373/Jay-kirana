@@ -14,7 +14,7 @@ const path = require('path');
 const fs = require('fs');
 const { auth } = require('../middleware/auth');
 const { transporter, defaultMailOptions } = require('../utils/mailer');
-const config = require('../config');
+const config = require('../config/config');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
