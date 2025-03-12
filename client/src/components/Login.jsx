@@ -18,38 +18,17 @@ function Login() {
     setError('');
     
     try {
-      console.log('Attempting login with:', { email: form.email });
       let response;
       if (isSignup) {
         response = await axios.post('/api/register', { ...form, name: form.email.split('@')[0] });
       } else {
         response = await axios.post('/api/login', form);
       }
-
-      console.log('Login response:', response.data);
-      
-      if (!response.data || !response.data.token || !response.data.user) {
-        throw new Error('Invalid response format from server');
-      }
-
-      await login(response.data);
+      login(response.data);
       navigate('/');
     } catch (err) {
-      console.error('Auth error:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      });
-
-      if (err.response?.status === 401) {
-        setError('Invalid email or password');
-      } else if (err.response?.status === 400) {
-        setError(err.response.data.error || 'Please fill in all required fields');
-      } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError(err.response?.data?.error || 'Authentication failed. Please try again.');
-      }
+      console.error('Auth error:', err);
+      setError(err.response?.data?.error || 'Authentication failed');
     } finally {
       setIsLoading(false);
     }

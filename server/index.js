@@ -4,33 +4,25 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
-
-// Environment setup
-const isProduction = process.env.NODE_ENV === 'production';
-console.log('Environment:', {
-  NODE_ENV: process.env.NODE_ENV,
-  RENDER_PROJECT_DIR: process.env.RENDER_PROJECT_DIR,
-  __dirname: __dirname,
-  clientBuildDir: path.join(__dirname, '../client/dist')
-});
 
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || process.env.NODE_ENV === 'development') {
-      return callback(null, true);
-    }
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
     
     const allowedOrigins = [
       'http://localhost:5200',
-      'http://127.0.0.1:5173',
-      'https://jay-kirana.onrender.com'
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5200',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173'
     ];
     
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -94,43 +86,6 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
-// Production static file serving
-if (isProduction) {
-  console.log('Production mode: Setting up static file serving...');
-  
-  // Define client build directory
-  const clientBuildDir = path.join(__dirname, '../client/dist');
-  
-  // Create client build directory if it doesn't exist
-  if (!fs.existsSync(clientBuildDir)) {
-    console.log('Warning: Client build directory not found at', clientBuildDir);
-    fs.mkdirSync(clientBuildDir, { recursive: true });
-    console.log('Created client build directory structure');
-  }
-
-  // Serve static files from the React app
-  app.use(express.static(clientBuildDir));
-
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    const indexPath = path.join(clientBuildDir, 'index.html');
-    console.log('Attempting to serve index.html from:', indexPath);
-    
-    // Log directory contents for debugging
-    const parentDir = path.dirname(clientBuildDir);
-    const buildDir = clientBuildDir;
-    console.log('Contents of parent directory:', fs.readdirSync(parentDir));
-    console.log('Contents of build directory:', fs.readdirSync(buildDir));
-
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      console.error('Error: index.html not found at', indexPath);
-      res.status(404).send('Application not found');
-    }
-  });
-}
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
@@ -146,7 +101,6 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
-    console.log('MongoDB Connected:', process.env.MONGODB_URI?.split('@')[1]);
     
     // Start server
     app.listen(PORT, () => {

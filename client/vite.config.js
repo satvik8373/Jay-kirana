@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -16,7 +15,8 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: '../server/dist',
+    outDir: 'dist',
+    assetsDir: 'assets',
     emptyOutDir: true,
     sourcemap: false,
     rollupOptions: {
@@ -26,11 +26,6 @@ export default defineConfig({
           ui: ['react-icons', 'framer-motion']
         }
       }
-    }
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
     }
   }
 });
