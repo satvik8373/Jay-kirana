@@ -14,35 +14,18 @@ const path = require('path');
 const fs = require('fs');
 const { auth } = require('../middleware/auth');
 const { transporter, defaultMailOptions } = require('../utils/mailer');
+const config = require('../config');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: function(origin, callback) {
-    const allowedOrigins = ['https://jay-kirana.onrender.com', 'http://localhost:5200'];
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.error('CORS error: Origin not allowed:', origin);
-      return callback(new Error('Origin not allowed by CORS'));
-    }
-    return callback(null, true);
-  },
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://jay-kirana.onrender.com'
+    : ['http://localhost:5200', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   maxAge: 86400 // 24 hours
 }));
-
-// Log all requests for debugging
-router.use((req, res, next) => {
-  console.log('Request:', {
-    method: req.method,
-    url: req.url,
-    origin: req.headers.origin,
-    headers: req.headers
-  });
-  next();
-});
 
 // Load environment variables
 require('dotenv').config();
@@ -1114,7 +1097,7 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
 
       // Add header image if uploaded
       if (req.file) {
-        const imageUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/uploads/marketing/${req.file.filename}`;
+        const imageUrl = `${config.serverUploadUrl}/marketing/${req.file.filename}`;
         emailHtml += `
           <img src="${imageUrl}" 
                alt="Header Image" 

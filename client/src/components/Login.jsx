@@ -29,19 +29,9 @@ function Login() {
         response = await axios.post(`${config.apiUrl}/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
-        }, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
         });
       } else {
-        response = await axios.post(`${config.apiUrl}/login`, form, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+        response = await axios.post(`${config.apiUrl}/login`, form);
       }
 
       console.log('Auth response:', response.data);

@@ -7,9 +7,16 @@ const config = {
   mongoUri: process.env.MONGODB_URI,
   
   // URLs
-  serverUrl: process.env.SERVER_URL || 'http://localhost:5000',
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5200',
-  apiBaseUrl: process.env.API_BASE_URL || '/api',
+  serverUrl: process.env.NODE_ENV === 'production'
+    ? 'https://jay-kirana-api.onrender.com'
+    : 'http://localhost:5000',
+  clientUrl: process.env.NODE_ENV === 'production'
+    ? 'https://jay-kirana.onrender.com'
+    : 'http://localhost:5200',
+  serverUploadUrl: process.env.NODE_ENV === 'production'
+    ? 'https://jay-kirana-api.onrender.com/uploads'
+    : 'http://localhost:5000/uploads',
+  apiBaseUrl: process.env.API_BASE_URL || '',
   
   // Email
   email: {
@@ -20,7 +27,9 @@ const config = {
   
   // CORS
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5200',
+    origin: process.env.NODE_ENV === 'production'
+      ? 'https://jay-kirana.onrender.com'
+      : ['http://localhost:5200', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -28,12 +37,12 @@ const config = {
 
   // Get full API URL
   getApiUrl: function() {
-    return `${this.serverUrl}${this.apiBaseUrl}`;
+    return this.serverUrl;
   },
 
   // Get full URL for a specific endpoint
   getEndpointUrl: function(endpoint) {
-    return `${this.serverUrl}${this.apiBaseUrl}${endpoint}`;
+    return `${this.serverUrl}${endpoint}`;
   }
 };
 
