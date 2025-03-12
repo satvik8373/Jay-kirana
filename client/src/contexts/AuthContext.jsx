@@ -11,6 +11,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -18,13 +19,20 @@ export function AuthProvider({ children }) {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         try {
+          // Set token in axios defaults
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          const response = await axios.get(`${config.apiUrl}/api/auth/profile`);
+          
+          const response = await axios.get(`${config.apiUrl}/user/profile`);
           const userData = response.data;
           
           setUser(userData);
           setToken(storedToken);
           setIsAdmin(userData.role === 'admin');
+          
+          console.log('Auth initialized:', { 
+            user: userData,
+            isAdmin: userData.role === 'admin'
+          });
         } catch (error) {
           console.error('Auth initialization error:', error);
           localStorage.removeItem('token');
@@ -34,22 +42,35 @@ export function AuthProvider({ children }) {
           setIsAdmin(false);
         }
       }
+      setLoading(false);
     };
 
     initAuth();
   }, []);
 
   const login = async (data) => {
-    if (!data || !data.token || !data.user) {
-      throw new Error('Invalid login data');
+    if (!data) {
+      throw new Error('No login data received');
     }
 
     const { token, user } = data;
+    if (!token || !user) {
+      throw new Error('Invalid login response format');
+    }
+
+    // Store token and update axios defaults
     localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+    // Update state
     setToken(token);
     setUser(user);
     setIsAdmin(user.role === 'admin');
+
+    console.log('Login successful:', {
+      user,
+      isAdmin: user.role === 'admin'
+    });
   };
 
   const logout = () => {
@@ -66,12 +87,12 @@ export function AuthProvider({ children }) {
     login,
     logout,
     isAuthenticated: !!token,
-    isAdmin
+    isAdmin,
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

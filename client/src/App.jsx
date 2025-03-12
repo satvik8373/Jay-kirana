@@ -123,24 +123,13 @@ function App() {
                   <Checkout cart={cart} onCheckout={clearCart} />
                 </ProtectedRoute>
               } />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={
+                <Navigate to="/" replace />
+              } />
             </Routes>
           </main>
           <Footer />
         </div>
-
-        <style jsx>{`
-          .app {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-          }
-
-          main {
-            flex: 1;
-            padding-top: ${isMobile ? '60px' : '120px'};
-          }
-        `}</style>
       </Router>
     </AuthProvider>
   );
