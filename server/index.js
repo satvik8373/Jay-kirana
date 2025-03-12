@@ -8,31 +8,39 @@ const fs = require('fs');
 
 const app = express();
 
+// Environment setup
+const isProduction = process.env.NODE_ENV === 'production';
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  RENDER_PROJECT_DIR: process.env.RENDER_PROJECT_DIR,
+  __dirname: __dirname,
+  clientBuildDir: path.join(__dirname, '../client/dist')
+});
+
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
+    if (!origin || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
     
     const allowedOrigins = [
       'http://localhost:5200',
       'http://127.0.0.1:5173',
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
+      'https://jay-kirana.onrender.com'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
+  maxAge: 600
 };
 
 // Apply CORS middleware
@@ -66,79 +74,10 @@ app.use((req, res, next) => {
 
 // Parse JSON bodies
 app.use(express.json());
-
-// Parse URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
 
-// Determine the client build directory
-const clientBuildDir = process.env.NODE_ENV === 'production'
-  ? path.resolve(process.env.RENDER_PROJECT_DIR || __dirname, 'client/dist')
-  : path.join(__dirname, '../client/dist');
-
-// Log environment information
-console.log('Environment:', {
-  NODE_ENV: process.env.NODE_ENV,
-  RENDER_PROJECT_DIR: process.env.RENDER_PROJECT_DIR,
-  __dirname: __dirname,
-  clientBuildDir: clientBuildDir
-});
-
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-  console.log('Production mode: Setting up static file serving...');
-  
-  // Ensure the client build directory exists
-  if (!fs.existsSync(clientBuildDir)) {
-    console.warn(`Warning: Client build directory not found at ${clientBuildDir}`);
-    // Try to create the directory structure
-    try {
-      fs.mkdirSync(clientBuildDir, { recursive: true });
-      console.log('Created client build directory structure');
-    } catch (err) {
-      console.error('Failed to create client build directory:', err);
-    }
-  }
-
-  // Serve static files
-  app.use(express.static(clientBuildDir));
-  
-  // Serve uploaded files
-  const uploadsDir = path.join(__dirname, 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory at:', uploadsDir);
-  }
-  app.use('/uploads', express.static(uploadsDir));
-  
-  // Handle React routing in production
-  app.get('*', (req, res, next) => {
-    if (req.url.startsWith('/api')) {
-      return next();
-    }
-    
-    const indexPath = path.join(clientBuildDir, 'index.html');
-    console.log('Attempting to serve index.html from:', indexPath);
-    
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      console.error('Error: index.html not found at', indexPath);
-      // List directory contents to help debug
-      try {
-        const parentDir = path.dirname(clientBuildDir);
-        console.log('Contents of parent directory:', fs.readdirSync(parentDir));
-        if (fs.existsSync(clientBuildDir)) {
-          console.log('Contents of build directory:', fs.readdirSync(clientBuildDir));
-        }
-      } catch (err) {
-        console.error('Error listing directory contents:', err);
-      }
-      res.status(404).send('Application not found');
-    }
-  });
-} else {
-  console.log('Development mode: Static file serving disabled');
-}
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Debug middleware (only in development)
 if (process.env.NODE_ENV === 'development') {
@@ -155,11 +94,49 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
+// Production static file serving
+if (isProduction) {
+  console.log('Production mode: Setting up static file serving...');
+  
+  // Define client build directory
+  const clientBuildDir = path.join(__dirname, '../client/dist');
+  
+  // Create client build directory if it doesn't exist
+  if (!fs.existsSync(clientBuildDir)) {
+    console.log('Warning: Client build directory not found at', clientBuildDir);
+    fs.mkdirSync(clientBuildDir, { recursive: true });
+    console.log('Created client build directory structure');
+  }
+
+  // Serve static files from the React app
+  app.use(express.static(clientBuildDir));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    const indexPath = path.join(clientBuildDir, 'index.html');
+    console.log('Attempting to serve index.html from:', indexPath);
+    
+    // Log directory contents for debugging
+    const parentDir = path.dirname(clientBuildDir);
+    const buildDir = clientBuildDir;
+    console.log('Contents of parent directory:', fs.readdirSync(parentDir));
+    console.log('Contents of build directory:', fs.readdirSync(buildDir));
+
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('Error: index.html not found at', indexPath);
+      res.status(404).send('Application not found');
+    }
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  console.error('Global error handler:', err);
+  res.status(500).json({ 
+    error: 'Server error',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
@@ -169,6 +146,7 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+    console.log('MongoDB Connected:', process.env.MONGODB_URI?.split('@')[1]);
     
     // Start server
     app.listen(PORT, () => {

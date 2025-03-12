@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -11,19 +12,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path
-      },
-      '/uploads': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false
       }
     }
   },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
+    outDir: '../server/dist',
     emptyOutDir: true,
-    sourcemap: process.env.NODE_ENV === 'development',
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -33,7 +28,9 @@ export default defineConfig({
       }
     }
   },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
   }
 });
