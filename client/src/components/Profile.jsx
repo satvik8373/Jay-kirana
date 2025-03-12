@@ -84,7 +84,9 @@ function Profile() {
         if (userData.avatar) {
           const avatarPath = userData.avatar.startsWith('http') 
             ? userData.avatar 
-            : `${config.apiUrl}/user/avatar/${userData.avatar.split('/').pop()}`;
+            : userData.avatar.startsWith('/') 
+              ? `${config.apiUrl}${userData.avatar}`
+              : `${config.apiUrl}/${userData.avatar}`;
           setAvatarPreview(avatarPath);
         }
 
@@ -139,10 +141,13 @@ function Profile() {
         bio: user.bio || ''
       });
 
+      // Update avatar URL handling
       if (user.avatar) {
         const avatarPath = user.avatar.startsWith('http') 
           ? user.avatar 
-          : `${config.apiUrl}/user/avatar/${user.avatar.split('/').pop()}`;
+          : user.avatar.startsWith('/') 
+            ? `${config.apiUrl}${user.avatar}`
+            : `${config.apiUrl}/${user.avatar}`;
         setAvatarPreview(avatarPath);
       } else {
         setAvatarPreview(null);
@@ -156,7 +161,7 @@ function Profile() {
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current);
       }
-    };
+    };  
   }, []);
 
   const showSuccessMessage = (message) => {

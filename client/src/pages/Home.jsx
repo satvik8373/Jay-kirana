@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductList from '../components/ProductList';
 import { FaLeaf, FaShieldAlt, FaTruck, FaClock } from 'react-icons/fa';
+import config from '../config';
 
 function Home({ addToCart }) {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -12,10 +15,37 @@ function Home({ addToCart }) {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/api/products');
+      setLoading(true);
+      setError('');
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      const response = await axios.get(`${config.apiUrl}/api/products`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.data) {
+        throw new Error('No products data received');
+      }
+      
       setProducts(response.data);
     } catch (err) {
       console.error('Error fetching products:', err);
+      if (err.response?.status === 401) {
+        setError('Please log in to view products');
+      } else if (err.response?.status === 404) {
+        setError('Products not found. The server might be unavailable.');
+      } else {
+        setError('Failed to load products. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,6 +71,26 @@ function Home({ addToCart }) {
       description: "Round the clock customer support"
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading products...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button onClick={fetchProducts} className="retry-button">
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="home">
@@ -195,6 +245,60 @@ function Home({ addToCart }) {
           .feature-card {
             padding: 20px;
           }
+        }
+
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 400px;
+          padding: 40px;
+        }
+
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+          border: 5px solid #f3f3f3;
+          border-top: 5px solid #1a237e;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+          text-align: center;
+          padding: 40px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          margin: 20px;
+        }
+
+        .error-message {
+          color: #e74c3c;
+          margin-bottom: 20px;
+          font-size: 1.1rem;
+        }
+
+        .retry-button {
+          background: #1a237e;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background-color 0.3s ease;
+        }
+
+        .retry-button:hover {
+          background: #283593;
         }
       `}</style>
     </div>

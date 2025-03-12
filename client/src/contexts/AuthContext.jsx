@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -28,6 +29,7 @@ export function AuthProvider({ children }) {
           setUser(userData);
           setToken(storedToken);
           setIsAdmin(userData.role === 'admin');
+          setError(null);
           
           console.log('Auth initialized:', { 
             user: userData,
@@ -40,7 +42,13 @@ export function AuthProvider({ children }) {
           setToken(null);
           setUser(null);
           setIsAdmin(false);
+          setError('Authentication failed. Please log in again.');
         }
+      } else {
+        setToken(null);
+        setUser(null);
+        setIsAdmin(false);
+        setError(null);
       }
       setLoading(false);
     };
@@ -58,19 +66,26 @@ export function AuthProvider({ children }) {
       throw new Error('Invalid login response format');
     }
 
-    // Store token and update axios defaults
-    localStorage.setItem('token', token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    try {
+      // Store token and update axios defaults
+      localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    // Update state
-    setToken(token);
-    setUser(user);
-    setIsAdmin(user.role === 'admin');
+      // Update state
+      setToken(token);
+      setUser(user);
+      setIsAdmin(user.role === 'admin');
+      setError(null);
 
-    console.log('Login successful:', {
-      user,
-      isAdmin: user.role === 'admin'
-    });
+      console.log('Login successful:', {
+        user,
+        isAdmin: user.role === 'admin'
+      });
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Failed to complete login. Please try again.');
+      throw err;
+    }
   };
 
   const logout = () => {
@@ -79,6 +94,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
     setIsAdmin(false);
+    setError(null);
   };
 
   const value = {
@@ -88,11 +104,13 @@ export function AuthProvider({ children }) {
     logout,
     isAuthenticated: !!token,
     isAdmin,
+    loading,
+    error
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
