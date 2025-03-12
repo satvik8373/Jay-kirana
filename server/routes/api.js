@@ -120,57 +120,49 @@ router.post('/register', async (req, res) => {
 
 // User Login (public)
 router.post('/login', async (req, res) => {
-  console.log('Login attempt:', { email: req.body.email });
-  
   try {
+    console.log('Login attempt:', { email: req.body.email });
+    
     const { email, password } = req.body;
     
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
-    const user = await User.findOne({ email }).select('_id name email password');
+    const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      console.log('Invalid password for user:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Generate token
     const token = jwt.sign(
-      { id: user._id },
-      JWT_SECRET,
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Create user data object without sensitive information
-    const userData = {
-      token,
-      user: {
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        isAdmin: user.email === process.env.ADMIN_EMAIL
-      }
+    // Remove sensitive data before sending
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
     };
 
-    console.log('Login successful:', { 
-      email: user.email,
-      userData: JSON.stringify(userData)
+    console.log('Login successful:', { userId: user._id, email: user.email });
+
+    res.json({
+      token,
+      user: userResponse
     });
-    
-    res.json(userData);
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Server error' });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

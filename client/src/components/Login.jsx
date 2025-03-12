@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import config from '../config';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '', remember: false });
@@ -18,17 +19,53 @@ function Login() {
     setError('');
     
     try {
+      console.log('Attempting login with:', { email: form.email });
+      
       let response;
       if (isSignup) {
-        response = await axios.post('/api/register', { ...form, name: form.email.split('@')[0] });
+        response = await axios.post(`${config.apiUrl}/register`, { 
+          ...form, 
+          name: form.email.split('@')[0] 
+        });
       } else {
-        response = await axios.post('/api/login', form);
+        response = await axios.post(`${config.apiUrl}/login`, form);
       }
-      login(response.data);
+
+      console.log('Auth response:', response.data);
+
+      if (!response.data) {
+        throw new Error('No response data received');
+      }
+
+      if (isSignup) {
+        setIsSignup(false);
+        setError('');
+        setForm({ email: '', password: '', remember: false });
+        setSuccess('Registration successful! Please login.');
+        return;
+      }
+
+      const { token, user } = response.data;
+      if (!token || !user) {
+        throw new Error('Invalid response format');
+      }
+
+      await login(response.data);
       navigate('/');
     } catch (err) {
       console.error('Auth error:', err);
-      setError(err.response?.data?.error || 'Authentication failed');
+      
+      if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.status === 400) {
+        setError(err.response.data.error || 'Invalid input');
+      } else if (err.response?.status === 404) {
+        setError('Service not available');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError(err.response?.data?.error || err.message || 'Authentication failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +78,7 @@ function Login() {
           <h2>{isSignup ? 'Create Account' : 'Login Form'}</h2>
           
           {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
           
           <div className="input-field">
             <input
@@ -178,90 +216,51 @@ function Login() {
           margin: 25px 0;
         }
 
-        .input-field label {
-          position: absolute;
-          top: 50%;
-          left: 0;
-          transform: translateY(-50%);
-          color: #666666;
-          font-size: 16px;
-          pointer-events: none;
-          transition: 0.3s ease;
-        }
-
         .input-field input {
           width: 100%;
-          height: 45px;
-          background: transparent;
-          border: none;
-          outline: none;
+          height: 40px;
+          padding: 0 35px 0 5px;
           font-size: 16px;
+          border: none;
+          background: none;
+          outline: none;
           color: #333333;
-          padding: 0 40px 0 10px;
-          transition: all 0.3s ease;
         }
 
         .input-field input:focus ~ label,
         .input-field input:valid ~ label {
-          font-size: 0.9rem;
-          top: 10px;
-          transform: translateY(-150%);
+          transform: translateY(-20px);
+          font-size: 12px;
           color: #1976d2;
         }
 
-        .password-toggle {
+        .input-field label {
           position: absolute;
-          right: 10px;
           top: 50%;
+          left: 5px;
           transform: translateY(-50%);
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          font-size: 16px;
+          pointer-events: none;
+          transition: 0.3s ease;
           color: #666666;
-          transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover:not(:disabled) {
-          color: #1976d2;
-        }
-
-        .password-toggle:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .password-toggle svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .input-field input:focus ~ .password-toggle {
-          color: #1976d2;
         }
 
         .forget {
           display: flex;
-          align-items: center;
           justify-content: space-between;
-          margin: 25px 0 35px 0;
-          color: #666666;
-        }
-
-        #remember {
-          accent-color: #1976d2;
+          align-items: center;
+          margin: 15px 0 35px;
         }
 
         .forget label {
           display: flex;
           align-items: center;
+          color: #666666;
         }
 
-        .forget label p {
-          margin-left: 8px;
+        .forget label input {
+          margin-right: 5px;
+          accent-color: #1976d2;
         }
 
         .wrapper a {
@@ -337,26 +336,38 @@ function Login() {
           font-size: 14px;
         }
 
-        @media (max-width: 480px) {
-          .auth-page {
-            padding: 20px 10px;
-            margin-top: 40px;
-          }
+        .success-message {
+          background: rgba(76, 175, 80, 0.05);
+          color: #2e7d32;
+          padding: 10px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          border: 1px solid rgba(76, 175, 80, 0.1);
+          font-size: 14px;
+        }
 
-          .wrapper {
-            width: 100%;
-            padding: 30px 20px;
-            margin: 20px auto;
-          }
+        .password-toggle {
+          position: absolute;
+          right: 5px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
 
-          h2 {
-            font-size: 1.8rem;
-          }
+        .password-toggle svg {
+          width: 20px;
+          height: 20px;
+          color: #666666;
+        }
 
-          .forget {
-            flex-direction: column;
-            gap: 10px;
-          }
+        .password-toggle:hover svg {
+          color: #1976d2;
         }
       `}</style>
     </div>
