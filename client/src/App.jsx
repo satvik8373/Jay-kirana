@@ -29,39 +29,51 @@ function ProtectedRoute({ children, requireAdmin }) {
 }
 
 function App() {
-  const [cart, setCart] = useState([]);
-  const [cartItemCount, setCartItemCount] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
   const addToCart = (product) => {
-    const existingItem = cart.find(item => item._id === product._id);
-    if (existingItem) {
-      setCart(cart.map(item =>
-        item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
-      ));
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.productId === product._id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.productId === product._id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevCart, { ...product, productId: product._id, quantity: 1 }];
+    });
   };
 
   const removeFromCart = (productId) => {
-    setCart(cart.filter(item => item._id !== productId));
+    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
   };
 
   const updateQuantity = (productId, quantity) => {
-    if (quantity < 1) return removeFromCart(productId);
-    setCart(cart.map(item =>
-      item._id === productId ? { ...item, quantity } : item
-    ));
+    if (quantity < 1) {
+      removeFromCart(productId);
+      return;
+    }
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.productId === productId ? { ...item, quantity } : item
+      )
+    );
   };
 
   const clearCart = () => {
@@ -82,7 +94,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/admin" element={
+              <Route path="/admin/*" element={
                 <ProtectedRoute requireAdmin={true}>
                   <Admin />
                 </ProtectedRoute>
@@ -111,7 +123,9 @@ function App() {
                   <Checkout cart={cart} onCheckout={clearCart} />
                 </ProtectedRoute>
               } />
-              <Route path="*" element={<Navigate to="/login" />} />
+              <Route path="*" element={
+                <Navigate to="/" replace />
+              } />
             </Routes>
           </main>
           <Footer />

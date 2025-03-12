@@ -141,8 +141,15 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Check if user is admin
+    const isAdmin = email === process.env.ADMIN_EMAIL;
+
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { 
+        userId: user._id, 
+        email: user.email,
+        role: isAdmin ? 'admin' : 'user'
+      },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -152,11 +159,15 @@ router.post('/login', async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: isAdmin ? 'admin' : 'user',
       createdAt: user.createdAt
     };
 
-    console.log('Login successful:', { userId: user._id, email: user.email });
+    console.log('Login successful:', { 
+      userId: user._id, 
+      email: user.email,
+      role: isAdmin ? 'admin' : 'user'
+    });
 
     res.json({
       token,
