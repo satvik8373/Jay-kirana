@@ -26,12 +26,12 @@ function Login() {
       
       let response;
       if (isSignup) {
-        response = await axios.post(`${config.apiUrl}/api/register`, { 
+        response = await axios.post(`${config.apiUrl}/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
         });
       } else {
-        response = await axios.post(`${config.apiUrl}/api/login`, form);
+        response = await axios.post(`${config.apiUrl}/login`, form);
       }
 
       console.log('Auth response:', response.data);
@@ -65,7 +65,7 @@ function Login() {
       } else if (err.response?.status === 404) {
         setError('Service not available. Please check the API configuration.');
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check your connection and API configuration.');
+        setError('Network error. Please check your connection.');
       } else {
         setError(err.response?.data?.error || err.message || 'Authentication failed');
       }
