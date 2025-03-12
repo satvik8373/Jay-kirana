@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const apiRoutes = require('./routes/api');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -69,17 +70,46 @@ app.use(express.json());
 // Parse URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
 
+// Determine the client build directory
+const clientBuildDir = process.env.NODE_ENV === 'production'
+  ? path.resolve(process.env.RENDER_PROJECT_DIR || __dirname, '../client/dist')
+  : path.join(__dirname, '../client/dist');
+
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === 'production') {
+  console.log('Production mode: Serving static files from:', clientBuildDir);
+  
+  // Ensure the client build directory exists
+  if (!fs.existsSync(clientBuildDir)) {
+    console.warn(`Warning: Client build directory not found at ${clientBuildDir}`);
+  }
+
   // Serve static files
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+  app.use(express.static(clientBuildDir));
   
   // Serve uploaded files
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
   
-  console.log('Running in production mode');
+  // Handle React routing in production
+  app.get('*', (req, res, next) => {
+    if (req.url.startsWith('/api')) {
+      return next();
+    }
+    
+    const indexPath = path.join(clientBuildDir, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('Error: index.html not found at', indexPath);
+      res.status(404).send('Application not found');
+    }
+  });
 } else {
-  console.log('Running in development mode');
+  console.log('Development mode: Static file serving disabled');
 }
 
 // Debug middleware (only in development)
@@ -96,17 +126,6 @@ if (process.env.NODE_ENV === 'development') {
 
 // Routes
 app.use('/api', apiRoutes);
-
-// Handle React routing in production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    if (req.url.startsWith('/api')) {
-      // Let API routes handle API requests
-      return next();
-    }
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  });
-}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
