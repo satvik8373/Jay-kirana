@@ -6,21 +6,35 @@ const AuthContext = createContext();
 
 const ADMIN_EMAIL = 'satvikpatel8373@gmail.com';
 
+// Safe JSON parse function with default value
+const safeJSONParse = (str, defaultValue = null) => {
+  try {
+    return str ? JSON.parse(str) : defaultValue;
+  } catch (error) {
+    console.error('JSON Parse error:', error);
+    return defaultValue;
+  }
+};
+
 // Initialize axios defaults
 axios.defaults.withCredentials = true;
 
 export function AuthProvider({ children }) {
+  // Initialize states with safe JSON parsing
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    return !!token;
   });
+
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    return safeJSONParse(localStorage.getItem('user'), null);
   });
+
   const [loading, setLoading] = useState(true);
+
   const [isAdmin, setIsAdmin] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser).email === ADMIN_EMAIL : false;
+    const savedUser = safeJSONParse(localStorage.getItem('user'), null);
+    return savedUser?.email === ADMIN_EMAIL;
   });
 
   // Set up axios interceptor for token
@@ -34,6 +48,16 @@ export function AuthProvider({ children }) {
       delete axios.defaults.headers.common['Authorization'];
     };
   }, []);
+
+  const handleLogout = () => {
+    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    setIsAuthenticated(false);
+    setUser(null);
+    setIsAdmin(false);
+  };
 
   // Initialize auth state from localStorage and verify with server
   useEffect(() => {
@@ -49,16 +73,9 @@ export function AuthProvider({ children }) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         // Get saved user data
-        const savedUser = localStorage.getItem('user');
-        let userObj = null;
-        
-        try {
-          userObj = savedUser ? JSON.parse(savedUser) : null;
-        } catch (parseError) {
-          console.error('Error parsing saved user:', parseError);
-          handleLogout();
-          setLoading(false);
-          return;
+        const savedUser = safeJSONParse(localStorage.getItem('user'), null);
+        if (!savedUser) {
+          throw new Error('No valid user data found');
         }
 
         // Verify token with server
@@ -106,24 +123,19 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const handleLogout = () => {
-      delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-    setIsAuthenticated(false);
-    setUser(null);
-    setIsAdmin(false);
-  };
-
   const contextValue = {
-      isAuthenticated, 
-      user, 
-      isAdmin, 
+    isAuthenticated, 
+    user, 
+    isAdmin, 
     loading,
     login: handleLogin,
     logout: handleLogout
   };
+
+  // Show loading state
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={contextValue}>
