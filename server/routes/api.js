@@ -17,9 +17,9 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: process.env.NODE_ENV === 'production'
+  origin: process.env.NODE_ENV === 'production' 
     ? 'https://jay-kirana.onrender.com'
-    : ['http://localhost:5000', 'http://localhost:5200'],
+    : 'http://localhost:5200',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -119,57 +119,32 @@ router.post('/register', async (req, res) => {
 });
 
 // User Login (public)
-router.post('/users/login', async (req, res) => {
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      console.log('Login attempt failed: Missing credentials');
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Find user
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log('Login attempt failed: User not found -', email);
+    if (!user || !await bcrypt.compare(password, user.password)) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      console.log('Login attempt failed: Invalid password -', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+    
+    try {
+      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
+      const userData = {
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email
+        }
+      };
+      res.json(userData);
+    } catch (tokenError) {
+      console.error('Error generating token:', tokenError);
+      res.status(500).json({ error: 'Error generating authentication token' });
     }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    // Create user object without sensitive data
-    const userResponse = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      phone: user.phone,
-      address: user.address,
-      isAdmin: user.isAdmin
-    };
-
-    console.log('Login successful:', email);
-    res.json({
-      message: 'Login successful',
-      token,
-      user: userResponse
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error during login' });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

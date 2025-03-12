@@ -7,10 +7,6 @@ const path = require('path');
 
 const app = express();
 
-// Parse JSON bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
@@ -18,18 +14,14 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      'http://localhost:5000',
       'http://localhost:5200',
-      'http://127.0.0.1:5000',
-      'http://127.0.0.1:5200',
-      'https://jay-kirana.onrender.com',
-      'https://jay-kirana-api.onrender.com'
+      'http://127.0.0.1:5173',
+      'https://jay-kirana.onrender.com'
     ];
     
-    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
-      console.log('CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -42,6 +34,36 @@ const corsOptions = {
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
+
+// Security middleware
+app.use((req, res, next) => {
+  // Allow requests from any origin in development
+  const origin = req.headers.origin;
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else if (origin) {
+    const allowedOrigins = ['http://localhost:5200', 'http://localhost:3000', 'http://localhost:5173'];
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
+// Parse JSON bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -58,19 +80,8 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Mount API routes
+// Routes
 app.use('/api', apiRoutes);
-
-// Root route for health check
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
-
-// Handle 404 errors
-app.use((req, res) => {
-  console.log('404 Not Found:', req.method, req.url);
-  res.status(404).json({ error: 'Route not found' });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -81,8 +92,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Use port 10000 for production (Render.com) or 5200 for development
-const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 10000 : 5200);
+const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
@@ -92,7 +102,6 @@ const startServer = async () => {
     // Start server
     app.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-      console.log(`API available at ${process.env.NODE_ENV === 'production' ? 'https://jay-kirana-api.onrender.com' : `http://localhost:${PORT}`}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -100,4 +109,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+startServer(); 
