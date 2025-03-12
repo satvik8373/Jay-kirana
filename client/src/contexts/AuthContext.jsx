@@ -86,21 +86,45 @@ export function AuthProvider({ children }) {
 
   const handleLogin = async (userData) => {
     try {
+      if (!userData) {
+        throw new Error('No login data received');
+      }
+
+      console.log('Received login data:', userData);
+
       const { token, user } = userData;
       
-      if (!token || !user || !user.email) {
-        throw new Error('Invalid login data');
+      if (!token) {
+        throw new Error('No token received in login data');
       }
       
+      if (!user || typeof user !== 'object') {
+        throw new Error('Invalid user data structure');
+      }
+
+      if (!user.email || !user._id || !user.name) {
+        throw new Error('Missing required user fields');
+      }
+      
+      // Set axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Store in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
+      // Update state
       setIsAuthenticated(true);
       setUser(user);
       setIsAdmin(user.email === ADMIN_EMAIL);
+
+      console.log('Login successful:', {
+        isAuthenticated: true,
+        isAdmin: user.email === ADMIN_EMAIL,
+        user: user
+      });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.message);
       handleLogout();
       throw error;
     }

@@ -131,7 +131,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('_id name email password');
     if (!user) {
       console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -155,14 +155,18 @@ router.post('/login', async (req, res) => {
     const userData = {
       token,
       user: {
-        _id: user._id,
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         isAdmin: user.email === process.env.ADMIN_EMAIL
       }
     };
 
-    console.log('Login successful:', { email: user.email });
+    console.log('Login successful:', { 
+      email: user.email,
+      userData: JSON.stringify(userData)
+    });
+    
     res.json(userData);
   } catch (err) {
     console.error('Login error:', err);
