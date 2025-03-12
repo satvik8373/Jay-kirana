@@ -9,6 +9,7 @@ function Login() {
   const [isSignup, setIsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -17,18 +18,20 @@ function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
     
     try {
       console.log('Attempting login with:', { email: form.email });
+      console.log('API URL:', config.apiUrl);
       
       let response;
       if (isSignup) {
-        response = await axios.post(`${config.apiUrl}/register`, { 
+        response = await axios.post(`${config.apiUrl}/api/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
         });
       } else {
-        response = await axios.post(`${config.apiUrl}/login`, form);
+        response = await axios.post(`${config.apiUrl}/api/login`, form);
       }
 
       console.log('Auth response:', response.data);
@@ -60,9 +63,9 @@ function Login() {
       } else if (err.response?.status === 400) {
         setError(err.response.data.error || 'Invalid input');
       } else if (err.response?.status === 404) {
-        setError('Service not available');
+        setError('Service not available. Please check the API configuration.');
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check your connection.');
+        setError('Network error. Please check your connection and API configuration.');
       } else {
         setError(err.response?.data?.error || err.message || 'Authentication failed');
       }

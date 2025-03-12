@@ -17,12 +17,26 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://jay-kirana.onrender.com'
-    : 'http://localhost:5200',
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://jay-kirana.onrender.com',
+      'http://localhost:5200',
+      'http://localhost:5000'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('CORS policy: Origin not allowed'), false);
+    }
+    
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  maxAge: 86400 // 24 hours
 }));
 
 // Load environment variables
