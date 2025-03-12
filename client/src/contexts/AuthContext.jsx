@@ -62,36 +62,51 @@ export function AuthProvider({ children }) {
   // Initialize auth state from localStorage and verify with server
   useEffect(() => {
     const verifyAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        // Set authorization header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
+        const token = localStorage.getItem('token');
+        console.log('Verifying auth token:', token ? 'Found' : 'Not found');
+
+        if (!token) {
+          console.log('No token found, logging out');
+          handleLogout();
+          setLoading(false);
+          return;
+        }
+
         // Get saved user data
         const savedUser = safeJSONParse(localStorage.getItem('user'), null);
-        if (!savedUser) {
-          throw new Error('No valid user data found');
+        console.log('Saved user data:', savedUser ? 'Found' : 'Not found');
+
+        if (!savedUser || !savedUser.email) {
+          console.log('Invalid saved user data');
+          handleLogout();
+          setLoading(false);
+          return;
         }
 
-        // Verify token with server
-        const response = await axios.get(`${config.apiUrl}/user/me`);
-        const userData = response.data;
+        // Set authorization header
+        const cleanToken = token.trim();
+        axios.defaults.headers.common['Authorization'] = `Bearer ${cleanToken}`;
         
-        if (!userData || !userData.email) {
-          throw new Error('Invalid user data received');
+        // Verify token with server
+        console.log('Verifying token with server...');
+        const response = await axios.get('/api/user/me');
+        
+        if (!response.data || !response.data.email) {
+          throw new Error('Invalid user data received from server');
         }
 
-        setUser(userData);
+        console.log('Token verification successful');
+        setUser(response.data);
         setIsAuthenticated(true);
-        setIsAdmin(userData.email === ADMIN_EMAIL);
-        localStorage.setItem('user', JSON.stringify(userData));
+        setIsAdmin(response.data.email === ADMIN_EMAIL);
+        localStorage.setItem('user', JSON.stringify(response.data));
       } catch (error) {
-        console.error('Error verifying token:', error);
+        console.error('Token verification failed:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
         handleLogout();
       } finally {
         setLoading(false);
@@ -103,21 +118,48 @@ export function AuthProvider({ children }) {
 
   const handleLogin = async (userData) => {
     try {
-      const { token, user } = userData;
-      
-      if (!token || !user || !user.email) {
-        throw new Error('Invalid login data');
+      console.log('Processing login data:', {
+        hasToken: !!userData.token,
+        hasUser: !!userData.user,
+        userEmail: userData.user?.email
+      });
+
+      if (!userData || !userData.token || !userData.user) {
+        throw new Error('Missing required login data');
       }
-      
+
+      if (!userData.user.email) {
+        throw new Error('Invalid user data: missing email');
+      }
+
+      // Clean the token string
+      const token = userData.token.trim();
+      if (!token) {
+        throw new Error('Invalid token: empty after trimming');
+      }
+
+      // Set axios default header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
       
+      // Store data in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData.user));
+      
+      // Update state
       setIsAuthenticated(true);
-      setUser(user);
-      setIsAdmin(user.email === ADMIN_EMAIL);
+      setUser(userData.user);
+      setIsAdmin(userData.user.email === ADMIN_EMAIL);
+
+      console.log('Login successful:', {
+        isAuthenticated: true,
+        isAdmin: userData.user.email === ADMIN_EMAIL,
+        email: userData.user.email
+      });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', {
+        message: error.message,
+        stack: error.stack
+      });
       handleLogout();
       throw error;
     }

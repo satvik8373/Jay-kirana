@@ -16,20 +16,22 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:5200',
       'http://127.0.0.1:5173',
-      'https://jay-kirana.onrender.com'
+      'https://jay-kirana.onrender.com',
+      'https://jay-kirana-api.onrender.com'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
+      console.log('CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600
+  maxAge: 86400 // 24 hours
 };
 
 // Apply CORS middleware
@@ -63,10 +65,22 @@ app.use((req, res, next) => {
 
 // Parse JSON bodies
 app.use(express.json());
+
+// Parse URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+  
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  
+  console.log('Running in production mode');
+} else {
+  console.log('Running in development mode');
+}
 
 // Debug middleware (only in development)
 if (process.env.NODE_ENV === 'development') {
@@ -83,12 +97,22 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api', apiRoutes);
 
+// Handle React routing in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    if (req.url.startsWith('/api')) {
+      // Let API routes handle API requests
+      return next();
+    }
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  res.status(500).json({ 
-    error: 'Server error',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 
