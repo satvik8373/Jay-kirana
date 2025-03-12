@@ -45,31 +45,28 @@ function Profile() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
     const loadUserData = async () => {
       try {
         const token = localStorage.getItem('token');
-        console.log('Token from localStorage:', token ? 'Found' : 'Not found');
-        
         if (!token) {
           console.error('No token found');
           navigate('/login');
           return;
         }
 
-        console.log('Making request to:', `${config.apiUrl}/user/profile`);
-        console.log('Request headers:', {
-          Authorization: `Bearer ${token}`
-        });
-
         const response = await axios.get(`${config.apiUrl}/user/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
-          }
+          },
+          signal: controller.signal
         });
 
-        console.log('Profile API Response:', response.data);
+        if (!isMounted) return;
+
         const userData = response.data;
-        
         if (!userData) {
           throw new Error('No user data received');
         }
@@ -85,19 +82,24 @@ function Profile() {
         });
 
         if (userData.avatar) {
-          setAvatarPreview(`${config.apiUrl}/user/avatar/${userData.avatar.split('/').pop()}`);
+          const avatarPath = userData.avatar.startsWith('http') 
+            ? userData.avatar 
+            : `${config.apiUrl}/user/avatar/${userData.avatar.split('/').pop()}`;
+          setAvatarPreview(avatarPath);
         }
 
-        await login({ token, user: userData });
+        // Only update login state if we have new data
+        if (JSON.stringify(userData) !== JSON.stringify(user)) {
+          await login({ token, user: userData });
+        }
       } catch (err) {
+        if (!isMounted) return;
+        if (axios.isCancel(err)) {
+          console.log('Request cancelled');
+          return;
+        }
+
         console.error('Failed to load user data:', err);
-        console.error('Error details:', {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          headers: err.response?.headers
-        });
-        
         const errorMessage = err.response?.data?.error || err.message || 'Failed to load profile data';
         
         if (err.response?.status === 401) {
@@ -111,12 +113,19 @@ function Profile() {
           setError(errorMessage);
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserData();
-  }, [navigate, login]);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [navigate, login, user]);
 
   useEffect(() => {
     if (user) {
@@ -131,7 +140,12 @@ function Profile() {
       });
 
       if (user.avatar) {
-        setAvatarPreview(`${config.apiUrl}/user/avatar/${user.avatar.split('/').pop()}`);
+        const avatarPath = user.avatar.startsWith('http') 
+          ? user.avatar 
+          : `${config.apiUrl}/user/avatar/${user.avatar.split('/').pop()}`;
+        setAvatarPreview(avatarPath);
+      } else {
+        setAvatarPreview(null);
       }
     }
   }, [user]);
@@ -313,6 +327,13 @@ function Profile() {
     navigate('/login');
   };
 
+  // Add a function to handle avatar load errors
+  const handleAvatarError = () => {
+    setAvatarPreview(null);
+    // Don't show error message for missing avatar
+    // setError('Failed to load profile picture');
+  };
+
   if (loading) {
     return <LoadingScreen message="Updating profile..." />;
   }
@@ -326,13 +347,12 @@ function Profile() {
               src={avatarPreview} 
               alt="Profile" 
               className="avatar-image"
-              onError={() => {
-                setAvatarPreview(null);
-                setError('Failed to load profile picture');
-              }}
+              onError={handleAvatarError}
             />
           ) : (
-            <FaUser />
+            <div className="default-avatar">
+              <FaUser />
+            </div>
           )}
           <div className="avatar-overlay">
             <FaCamera className="camera-icon" />
