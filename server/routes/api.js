@@ -120,28 +120,50 @@ router.post('/register', async (req, res) => {
 
 // User Login (public)
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  console.log('Login attempt:', { email: req.body.email });
+  
   try {
+    const { email, password } = req.body;
+    
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
+    if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
-    try {
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
-      const userData = {
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email
-        }
-      };
-      res.json(userData);
-    } catch (tokenError) {
-      console.error('Error generating token:', tokenError);
-      res.status(500).json({ error: 'Error generating authentication token' });
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      console.log('Invalid password for user:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Create user data object without sensitive information
+    const userData = {
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.email === process.env.ADMIN_EMAIL
+      }
+    };
+
+    console.log('Login successful:', { email: user.email });
+    res.json(userData);
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
