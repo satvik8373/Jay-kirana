@@ -84,12 +84,14 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="app">
-          {isMobile ? (
-            <MobileHeader cartItemCount={cartItemCount} />
-          ) : (
-            <Header cartItemCount={cartItemCount} />
-          )}
-          <main>
+          <header className="header-container">
+            {isMobile ? (
+              <MobileHeader cartItemCount={cartItemCount} />
+            ) : (
+              <Header cartItemCount={cartItemCount} />
+            )}
+          </header>
+          <main className="main-content">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -136,9 +138,27 @@ function App() {
             flex-direction: column;
           }
 
-          main {
+          .header-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+
+          .main-content {
             flex: 1;
-            padding-top: ${isMobile ? '60px' : '120px'};
+            margin-top: ${isMobile ? '60px' : '120px'};
+            padding: 20px;
+            background: #f5f5f5;
+          }
+
+          @media (max-width: 768px) {
+            .main-content {
+              padding: 10px;
+            }
           }
         `}</style>
       </Router>
