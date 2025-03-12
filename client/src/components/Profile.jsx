@@ -84,9 +84,7 @@ function Profile() {
         if (userData.avatar) {
           const avatarPath = userData.avatar.startsWith('http') 
             ? userData.avatar 
-            : userData.avatar.startsWith('/') 
-              ? `${config.apiUrl}${userData.avatar}`
-              : `${config.apiUrl}/${userData.avatar}`;
+            : `${config.apiUrl}/uploads/avatars/${userData.avatar}`;
           setAvatarPreview(avatarPath);
         }
 
@@ -145,9 +143,7 @@ function Profile() {
       if (user.avatar) {
         const avatarPath = user.avatar.startsWith('http') 
           ? user.avatar 
-          : user.avatar.startsWith('/') 
-            ? `${config.apiUrl}${user.avatar}`
-            : `${config.apiUrl}/${user.avatar}`;
+          : `${config.apiUrl}/uploads/avatars/${user.avatar}`;
         setAvatarPreview(avatarPath);
       } else {
         setAvatarPreview(null);
@@ -266,7 +262,10 @@ function Profile() {
       );
       // Reset preview if upload fails
       if (user?.avatar) {
-        setAvatarPreview(`${config.apiUrl}/user/avatar/${user.avatar.split('/').pop()}`);
+        const avatarPath = user.avatar.startsWith('http')
+          ? user.avatar
+          : `${config.apiUrl}/uploads/avatars/${user.avatar}`;
+        setAvatarPreview(avatarPath);
       } else {
         setAvatarPreview(null);
       }
