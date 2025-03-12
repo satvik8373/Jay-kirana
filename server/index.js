@@ -72,16 +72,31 @@ app.use(express.urlencoded({ extended: true }));
 
 // Determine the client build directory
 const clientBuildDir = process.env.NODE_ENV === 'production'
-  ? path.resolve(process.env.RENDER_PROJECT_DIR || __dirname, '../client/dist')
+  ? path.resolve(process.env.RENDER_PROJECT_DIR || __dirname, 'client/dist')
   : path.join(__dirname, '../client/dist');
+
+// Log environment information
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  RENDER_PROJECT_DIR: process.env.RENDER_PROJECT_DIR,
+  __dirname: __dirname,
+  clientBuildDir: clientBuildDir
+});
 
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === 'production') {
-  console.log('Production mode: Serving static files from:', clientBuildDir);
+  console.log('Production mode: Setting up static file serving...');
   
   // Ensure the client build directory exists
   if (!fs.existsSync(clientBuildDir)) {
     console.warn(`Warning: Client build directory not found at ${clientBuildDir}`);
+    // Try to create the directory structure
+    try {
+      fs.mkdirSync(clientBuildDir, { recursive: true });
+      console.log('Created client build directory structure');
+    } catch (err) {
+      console.error('Failed to create client build directory:', err);
+    }
   }
 
   // Serve static files
@@ -91,6 +106,7 @@ if (process.env.NODE_ENV === 'production') {
   const uploadsDir = path.join(__dirname, 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory at:', uploadsDir);
   }
   app.use('/uploads', express.static(uploadsDir));
   
@@ -101,10 +117,22 @@ if (process.env.NODE_ENV === 'production') {
     }
     
     const indexPath = path.join(clientBuildDir, 'index.html');
+    console.log('Attempting to serve index.html from:', indexPath);
+    
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
       console.error('Error: index.html not found at', indexPath);
+      // List directory contents to help debug
+      try {
+        const parentDir = path.dirname(clientBuildDir);
+        console.log('Contents of parent directory:', fs.readdirSync(parentDir));
+        if (fs.existsSync(clientBuildDir)) {
+          console.log('Contents of build directory:', fs.readdirSync(clientBuildDir));
+        }
+      } catch (err) {
+        console.error('Error listing directory contents:', err);
+      }
       res.status(404).send('Application not found');
     }
   });
