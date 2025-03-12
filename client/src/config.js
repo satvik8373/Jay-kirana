@@ -1,27 +1,31 @@
 const config = {
-  apiUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://jay-kirana-api.onrender.com/api'
-    : 'http://localhost:5000/api',
-  
-  serverUrl: process.env.NODE_ENV === 'production'
-    ? 'https://jay-kirana-api.onrender.com'
-    : 'http://localhost:5000',
-  
-  clientUrl: process.env.NODE_ENV === 'production'
-    ? 'https://jay-kirana.onrender.com'
-    : 'http://localhost:5200',
-  
-  uploadUrl: process.env.NODE_ENV === 'production'
-    ? 'https://jay-kirana-api.onrender.com/uploads'
-    : 'http://localhost:5000/uploads',
+  apiUrl: import.meta.env.VITE_API_URL,
+  serverUrl: import.meta.env.VITE_SERVER_URL,
+  clientUrl: import.meta.env.VITE_CLIENT_URL,
+  uploadUrl: import.meta.env.VITE_UPLOAD_URL,
 
   // Helper function to get full API endpoint URL
   getApiEndpoint: (endpoint) => {
-    const base = process.env.NODE_ENV === 'production' 
-      ? 'https://jay-kirana-api.onrender.com/api'
-      : 'http://localhost:5000/api';
-    return `${base}${endpoint}`;
+    return `${import.meta.env.VITE_API_URL}${endpoint}`;
+  },
+
+  // Debug information
+  debug: {
+    isProduction: import.meta.env.PROD,
+    isDevelopment: import.meta.env.DEV,
+    mode: import.meta.env.MODE,
   }
 };
+
+// Log configuration in development
+if (import.meta.env.DEV) {
+  console.log('App Configuration:', {
+    apiUrl: config.apiUrl,
+    serverUrl: config.serverUrl,
+    clientUrl: config.clientUrl,
+    uploadUrl: config.uploadUrl,
+    debug: config.debug
+  });
+}
 
 export default config; 
