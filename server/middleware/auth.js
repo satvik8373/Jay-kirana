@@ -16,12 +16,12 @@ const auth = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.id) {
+    if (!decoded || !decoded.userId) {
       throw new Error('Invalid token format');
     }
 
     // Find user
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.userId).select('-password');
     if (!user) {
       throw new Error('User not found');
     }
