@@ -11,30 +11,20 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         try {
-          // Set token in axios defaults
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          
           const response = await axios.get(`${config.apiUrl}/user/profile`);
           const userData = response.data;
           
           setUser(userData);
           setToken(storedToken);
           setIsAdmin(userData.role === 'admin');
-          setError(null);
-          
-          console.log('Auth initialized:', { 
-            user: userData,
-            isAdmin: userData.role === 'admin'
-          });
         } catch (error) {
           console.error('Auth initialization error:', error);
           localStorage.removeItem('token');
@@ -42,50 +32,24 @@ export function AuthProvider({ children }) {
           setToken(null);
           setUser(null);
           setIsAdmin(false);
-          setError('Authentication failed. Please log in again.');
         }
-      } else {
-        setToken(null);
-        setUser(null);
-        setIsAdmin(false);
-        setError(null);
       }
-      setLoading(false);
     };
 
     initAuth();
   }, []);
 
   const login = async (data) => {
-    if (!data) {
-      throw new Error('No login data received');
+    if (!data || !data.token || !data.user) {
+      throw new Error('Invalid login data');
     }
 
     const { token, user } = data;
-    if (!token || !user) {
-      throw new Error('Invalid login response format');
-    }
-
-    try {
-      // Store token and update axios defaults
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Update state
-      setToken(token);
-      setUser(user);
-      setIsAdmin(user.role === 'admin');
-      setError(null);
-
-      console.log('Login successful:', {
-        user,
-        isAdmin: user.role === 'admin'
-      });
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Failed to complete login. Please try again.');
-      throw err;
-    }
+    localStorage.setItem('token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setToken(token);
+    setUser(user);
+    setIsAdmin(user.role === 'admin');
   };
 
   const logout = () => {
@@ -94,7 +58,6 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
     setIsAdmin(false);
-    setError(null);
   };
 
   const value = {
@@ -103,9 +66,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     isAuthenticated: !!token,
-    isAdmin,
-    loading,
-    error
+    isAdmin
   };
 
   return (
