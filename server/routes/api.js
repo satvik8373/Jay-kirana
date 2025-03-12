@@ -17,12 +17,32 @@ const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: 'https://jay-kirana.onrender.com',
+  origin: function(origin, callback) {
+    const allowedOrigins = ['https://jay-kirana.onrender.com', 'http://localhost:5200'];
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      console.error('CORS error: Origin not allowed:', origin);
+      return callback(new Error('Origin not allowed by CORS'));
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   maxAge: 86400 // 24 hours
 }));
+
+// Log all requests for debugging
+router.use((req, res, next) => {
+  console.log('Request:', {
+    method: req.method,
+    url: req.url,
+    origin: req.headers.origin,
+    headers: req.headers
+  });
+  next();
+});
 
 // Load environment variables
 require('dotenv').config();
