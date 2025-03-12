@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
       if (storedToken) {
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          const response = await axios.get(`${config.apiUrl}/user/profile`);
+          const response = await axios.get(`${config.apiUrl}/auth/profile`);
           const userData = response.data;
           
           setUser(userData);

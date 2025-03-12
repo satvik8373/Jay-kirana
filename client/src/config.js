@@ -2,8 +2,8 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const config = {
   apiUrl: isDevelopment 
-    ? 'http://localhost:5000'
-    : 'https://jay-kirana-api.onrender.com',
+    ? 'http://localhost:5000/api'
+    : 'https://jay-kirana-api.onrender.com/api',
   clientUrl: isDevelopment
     ? 'http://localhost:5200'
     : 'https://jay-kirana.onrender.com',

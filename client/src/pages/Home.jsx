@@ -13,16 +13,13 @@ function Home({ addToCart }) {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await axios.get(`${config.apiUrl}/api/v1/products`, {
+        const response = await axios.get(`${config.apiUrl}/products`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
           }
         });
         
-        if (response.data && response.data.products) {
-          setProducts(response.data.products);
-        } else if (response.data) {
+        if (response.data) {
           setProducts(response.data);
         }
       } catch (err) {
