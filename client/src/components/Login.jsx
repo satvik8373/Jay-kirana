@@ -38,6 +38,9 @@ function Login() {
         return;
       }
 
+      console.log('Making login request to:', `${config.apiUrl}/api/auth/login`);
+      console.log('With form data:', { email: form.email });
+      
       response = await axios.post(`${config.apiUrl}/api/auth/login`, form);
       console.log('Login response:', response.data);
 
