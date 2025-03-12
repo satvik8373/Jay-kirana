@@ -9,8 +9,8 @@ const connectDB = async () => {
     }
 
     const conn = await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -34,7 +34,7 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error('MongoDB connection error:', error);
     process.exit(1);
   }
 };

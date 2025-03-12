@@ -45,16 +45,37 @@ export function AuthProvider({ children }) {
       }
 
       try {
-          const response = await axios.get(`${config.apiUrl}/user/me`);
-          setUser(response.data);
-          setIsAuthenticated(true);
-          setIsAdmin(response.data.email === ADMIN_EMAIL);
-        localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-          console.error('Error verifying token:', error);
-        if (error.response?.status === 401) {
+        // Set authorization header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        // Get saved user data
+        const savedUser = localStorage.getItem('user');
+        let userObj = null;
+        
+        try {
+          userObj = savedUser ? JSON.parse(savedUser) : null;
+        } catch (parseError) {
+          console.error('Error parsing saved user:', parseError);
           handleLogout();
+          setLoading(false);
+          return;
         }
+
+        // Verify token with server
+        const response = await axios.get(`${config.apiUrl}/user/me`);
+        const userData = response.data;
+        
+        if (!userData || !userData.email) {
+          throw new Error('Invalid user data received');
+        }
+
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsAdmin(userData.email === ADMIN_EMAIL);
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch (error) {
+        console.error('Error verifying token:', error);
+        handleLogout();
       } finally {
         setLoading(false);
       }
@@ -64,7 +85,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const handleLogin = async (userData) => {
+    try {
       const { token, user } = userData;
+      
+      if (!token || !user || !user.email) {
+        throw new Error('Invalid login data');
+      }
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       localStorage.setItem('token', token);
@@ -73,6 +99,11 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
       setUser(user);
       setIsAdmin(user.email === ADMIN_EMAIL);
+    } catch (error) {
+      console.error('Login error:', error);
+      handleLogout();
+      throw error;
+    }
   };
 
   const handleLogout = () => {

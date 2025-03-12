@@ -3,15 +3,25 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    // Get token from header and validate format
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Invalid authorization header format');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
     if (!token) {
       throw new Error('No authentication token provided');
     }
 
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    if (!decoded || !decoded.id) {
+      throw new Error('Invalid token format');
+    }
 
+    // Find user
+    const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       throw new Error('User not found');
     }
@@ -19,7 +29,7 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error('Authentication error:', error.message);
     res.status(401).json({ error: 'Please authenticate' });
   }
 };

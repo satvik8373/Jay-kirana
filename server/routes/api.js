@@ -8,16 +8,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { auth } = require('../middleware/auth');
+const { transporter, defaultMailOptions } = require('../utils/mailer');
 
 // Enable CORS for all routes with specific configuration
 router.use(cors({
-  origin: 'http://localhost:5200', // Allow requests from the client
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://jay-kirana.onrender.com'
+    : 'http://localhost:5200',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -32,20 +34,6 @@ if (!JWT_SECRET) {
   console.error('JWT_SECRET is not configured in environment variables');
   process.exit(1);
 }
-
-// Email configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// Configure default email options
-const defaultMailOptions = {
-  from: '"JAY KIRANA STORE" <' + process.env.EMAIL_USER + '>',
-};
 
 // Verify email configuration
 transporter.verify((error, success) => {
@@ -132,28 +120,50 @@ router.post('/register', async (req, res) => {
 
 // User Login (public)
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  console.log('Login attempt:', { email: req.body.email });
+  
   try {
+    const { email, password } = req.body;
+    
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {
+    if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    
-    try {
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '24h' });
-      const userData = {
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email
-        }
-      };
-      res.json(userData);
-    } catch (tokenError) {
-      console.error('Error generating token:', tokenError);
-      res.status(500).json({ error: 'Error generating authentication token' });
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      console.log('Invalid password for user:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Create user data object without sensitive information
+    const userData = {
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.email === process.env.ADMIN_EMAIL
+      }
+    };
+
+    console.log('Login successful:', { email: user.email });
+    res.json(userData);
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -852,11 +862,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  // Accept only jpeg, jpg, and png
-  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg') {
+  console.log('Received file:', file);
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/webp') {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only JPEG and PNG are allowed.'), false);
+    console.log('Invalid file type:', file.mimetype);
+    cb(null, false);
   }
 };
 
@@ -1027,7 +1038,16 @@ const marketingUpload = multer({
 // Send marketing emails (admin only)
 router.post('/admin/send-marketing-email', auth, marketingUpload.single('image'), async (req, res) => {
   try {
-    const { customerIds, subject, content, discountCode, discountPercentage, products, cardStyle } = JSON.parse(req.body.cardStyle);
+    console.log('Received marketing email request:', req.body);
+
+    // Parse the form data
+    const customerIds = JSON.parse(req.body.customerIds);
+    const subject = req.body.subject;
+    const content = req.body.content;
+    const discountCode = req.body.discountCode;
+    const discountPercentage = req.body.discountPercentage;
+    const products = JSON.parse(req.body.products || '[]');
+    const cardStyle = JSON.parse(req.body.cardStyle);
 
     // Verify if user is admin
     if (req.user.email !== process.env.ADMIN_EMAIL) {
@@ -1079,7 +1099,7 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
 
       // Add header image if uploaded
       if (req.file) {
-        const imageUrl = `${process.env.SERVER_URL}/uploads/marketing/${req.file.filename}`;
+        const imageUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/uploads/marketing/${req.file.filename}`;
         emailHtml += `
           <img src="${imageUrl}" 
                alt="Header Image" 
@@ -1166,21 +1186,26 @@ router.post('/admin/send-marketing-email', auth, marketingUpload.single('image')
       return transporter.sendMail(mailOptions);
     });
 
-    // Wait for all emails to be sent
-    await Promise.all(emailPromises);
+    try {
+      // Wait for all emails to be sent
+      await Promise.all(emailPromises);
 
-    // Log the marketing campaign
-    console.log('Marketing emails sent:', {
-      totalCustomers: customers.length,
-      subject,
-      discountCode,
-      products: productDetails.map(p => p.name)
-    });
+      // Log the marketing campaign
+      console.log('Marketing emails sent:', {
+        totalCustomers: customers.length,
+        subject,
+        discountCode,
+        products: productDetails.map(p => p.name)
+      });
 
-    res.json({ 
-      message: 'Marketing emails sent successfully',
-      totalSent: customers.length
-    });
+      res.json({ 
+        message: 'Marketing emails sent successfully',
+        totalSent: customers.length
+      });
+    } catch (emailError) {
+      console.error('Error sending marketing emails:', emailError);
+      throw new Error('Failed to send marketing emails: ' + emailError.message);
+    }
 
   } catch (error) {
     console.error('Marketing email error:', error);
@@ -1213,6 +1238,26 @@ router.get('/users/all', auth, async (req, res) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Serve marketing images
+router.get('/uploads/marketing/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, '../uploads/marketing', filename);
+    
+    console.log('Attempting to serve marketing image:', filepath);
+    
+    if (!fs.existsSync(filepath)) {
+      console.log('Marketing image file not found:', filepath);
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Marketing image fetch error:', error);
+    res.status(400).json({ error: 'Failed to fetch image' });
   }
 });
 
