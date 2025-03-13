@@ -11,43 +11,18 @@ function ResetPassword() {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isTokenValid, setIsTokenValid] = useState(false);
   const { token } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const verifyToken = async () => {
-      if (!token) {
-        setError('Invalid reset token');
-        setTimeout(() => navigate('/login'), 3000);
-        return;
-      }
-
-      try {
-        const response = await axios.get(`${config.apiUrl}/verify-reset-token/${token}`);
-        if (response.data.valid) {
-          setIsTokenValid(true);
-        } else {
-          setError('Invalid or expired reset token');
-          setTimeout(() => navigate('/login'), 3000);
-        }
-      } catch (err) {
-        console.error('Token verification error:', err);
-        setError('Invalid or expired reset token');
-        setTimeout(() => navigate('/login'), 3000);
-      }
-    };
-
-    verifyToken();
+    if (!token) {
+      setError('Invalid reset token');
+      setTimeout(() => navigate('/login'), 3000);
+    }
   }, [token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isTokenValid) {
-      setError('Invalid or expired reset token');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
     setSuccess('');
@@ -67,8 +42,9 @@ function ResetPassword() {
 
     try {
       console.log('Sending reset password request with token:', token);
-      const response = await axios.post(`${config.apiUrl}/reset-password`, {
-        token,
+      console.log('API URL:', config.apiUrl);
+      
+      const response = await axios.post(`${config.apiUrl}/reset-password/${token}`, {
         newPassword: password
       });
 
@@ -87,7 +63,7 @@ function ResetPassword() {
       } else if (err.response?.status === 500) {
         setError('Server error. Please try again later.');
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check if the server is running.');
+        setError('Network error. Please check your connection.');
       } else {
         setError('Failed to reset password. Please try again.');
       }
