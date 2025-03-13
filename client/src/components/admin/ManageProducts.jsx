@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../../config';
 
 function ManageProducts() {
   const [products, setProducts] = useState([]);
@@ -13,7 +14,7 @@ function ManageProducts() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/api/products');
+      const response = await axios.get(`${config.apiUrl}/products`);
       setProducts(response.data);
     } catch (err) {
       setError('Failed to fetch products');
@@ -25,7 +26,7 @@ function ManageProducts() {
     console.log('Attempting to delete product with ID:', id);
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        const response = await axios.delete(`/api/products/${id}`);
+        const response = await axios.delete(`${config.apiUrl}/products/${id}`);
         if (response.status === 200) {
           fetchProducts();
         } else {
@@ -46,7 +47,7 @@ function ManageProducts() {
   const saveProduct = async (id) => {
     console.log('Attempting to save product with ID:', id, 'Data:', updatedProduct);
     try {
-      const response = await axios.put(`/api/products/${id}`, updatedProduct);
+      const response = await axios.put(`${config.apiUrl}/products/${id}`, updatedProduct);
       if (response.status === 200) {
         setEditingProduct(null);
         fetchProducts();

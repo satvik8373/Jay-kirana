@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PrintOrder from './PrintOrder';
+import config from '../../config';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: config.apiUrl,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'

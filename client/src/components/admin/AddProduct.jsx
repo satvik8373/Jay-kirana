@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaPlus, FaEdit, FaTrash, FaImage } from 'react-icons/fa';
+import config from '../../config';
 
 // Configure axios with base URL
 const api = axios.create({
+  baseURL: config.apiUrl,
   headers: {
     'Content-Type': 'application/json'
   }
