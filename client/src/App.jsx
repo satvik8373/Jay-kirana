@@ -129,9 +129,7 @@ function App() {
                   <Users />
                 </ProtectedRoute>
               } />
-              <Route path="*" element={
-                <Navigate to="/" replace />
-              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           <Footer />

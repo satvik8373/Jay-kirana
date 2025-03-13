@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
+import Sidebar from '../components/admin/Sidebar';
+import Orders from '../components/admin/Orders';
 import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
-import Orders from '../components/admin/Orders';
-import Sidebar from '../components/admin/Sidebar';
-import EmailMarketing from '../components/EmailMarketing';
+import Users from '../components/admin/Users';
 
 function Admin() {
-  const [activeSection, setActiveSection] = useState('orders');
+  const [activeSection, setActiveSection] = useState('manage-products');
 
-  const renderSection = () => {
+  const renderContent = () => {
     switch (activeSection) {
       case 'orders':
         return <Orders />;
@@ -16,37 +16,38 @@ function Admin() {
         return <AddProduct />;
       case 'manage-products':
         return <ManageProducts />;
-      case 'email-marketing':
-        return <EmailMarketing />;
+      case 'users':
+        return <Users />;
       default:
-        return <Orders />;
+        return <ManageProducts />;
     }
   };
 
   return (
-    <div className="admin">
+    <div className="admin-layout">
       <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
       <div className="admin-content">
-        {renderSection()}
+        {renderContent()}
       </div>
 
       <style jsx>{`
-        .admin {
+        .admin-layout {
+          display: flex;
           min-height: 100vh;
           background-color: #f5f5f5;
         }
 
         .admin-content {
-          margin-left: 250px;
+          flex: 1;
           padding: 20px;
-          min-height: 100vh;
+          margin-left: 250px;
         }
 
         @media (max-width: 768px) {
           .admin-content {
             margin-left: 0;
-            padding: 10px;
-            margin-bottom: 70px; /* Space for mobile sidebar */
+            margin-bottom: 60px;
+            padding: 15px;
           }
         }
       `}</style>
