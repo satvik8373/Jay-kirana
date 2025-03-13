@@ -24,8 +24,9 @@ function Login() {
       console.log('Attempting login with:', { email: form.email });
       console.log('API URL:', config.apiUrl);
       
+      let response;
       if (isSignup) {
-        await axios.post(`${config.apiUrl}/api/register`, { 
+        response = await axios.post(`${config.apiUrl}/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
         });
@@ -37,7 +38,14 @@ function Login() {
         return;
       }
 
-      await login(form.email, form.password);
+      response = await axios.post(`${config.apiUrl}/login`, form);
+      console.log('Login response:', response.data);
+
+      if (!response.data || !response.data.token || !response.data.user) {
+        throw new Error('Invalid response format from server');
+      }
+
+      await login(response.data);
       navigate('/');
     } catch (err) {
       console.error('Auth error:', err);
