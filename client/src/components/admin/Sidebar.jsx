@@ -9,11 +9,6 @@ function Sidebar({ activeSection, setActiveSection }) {
       icon: FaShoppingCart
     },
     {
-      id: 'users',
-      label: 'Users',
-      icon: FaUsers
-    },
-    {
       id: 'add-product',
       label: 'Add Product',
       icon: FaPlus
@@ -22,6 +17,11 @@ function Sidebar({ activeSection, setActiveSection }) {
       id: 'manage-products',
       label: 'Manage Products',
       icon: FaBox
+    },
+    {
+      id: 'users',
+      label: 'Users',
+      icon: FaUsers
     },
     {
       id: 'email-marketing',
@@ -120,6 +120,7 @@ function Sidebar({ activeSection, setActiveSection }) {
           nav {
             flex-direction: row;
             justify-content: space-around;
+            overflow-x: auto;
           }
 
           .nav-item {
@@ -128,6 +129,7 @@ function Sidebar({ activeSection, setActiveSection }) {
             font-size: 0.8rem;
             gap: 5px;
             text-align: center;
+            min-width: 70px;
           }
 
           .nav-item svg {
