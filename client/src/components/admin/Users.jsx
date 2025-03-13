@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import config from '../../config';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity, FaMapPin, FaCrown } from 'react-icons/fa';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -36,7 +36,8 @@ function Users() {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone?.includes(searchTerm) ||
-    user.city?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.pincode?.includes(searchTerm)
   );
 
   return (
@@ -46,7 +47,7 @@ function Users() {
         <div className="search-bar">
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder="Search users by name, email, phone, city..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -62,7 +63,7 @@ function Users() {
           {filteredUsers.map(user => (
             <div key={user._id} className="user-card">
               <div className="user-header">
-                <FaUser className="user-icon" />
+                {user.role === 'admin' ? <FaCrown className="admin-icon" /> : <FaUser className="user-icon" />}
                 <h3>{user.name || 'No Name'}</h3>
               </div>
               
@@ -95,14 +96,16 @@ function Users() {
 
                 {user.pincode && (
                   <div className="info-item">
-                    <span className="pincode-label">PIN:</span>
+                    <FaMapPin />
                     <span>{user.pincode}</span>
                   </div>
                 )}
               </div>
 
               <div className="user-footer">
-                <span className="user-role">{user.role || 'customer'}</span>
+                <span className={`user-role ${user.role === 'admin' ? 'admin-role' : ''}`}>
+                  {user.role || 'customer'}
+                </span>
                 <span className="join-date">
                   Joined: {new Date(user.createdAt).toLocaleDateString()}
                 </span>
@@ -136,7 +139,7 @@ function Users() {
         }
 
         .search-bar input {
-          padding: 10px 15px;
+          padding: 12px 20px;
           border: 1px solid #e0e0e0;
           border-radius: 8px;
           width: 300px;
@@ -184,10 +187,16 @@ function Users() {
           color: #1a237e;
         }
 
+        .admin-icon {
+          font-size: 1.5rem;
+          color: #ffc107;
+        }
+
         .user-header h3 {
           margin: 0;
           color: #1a237e;
           font-size: 1.2rem;
+          flex-grow: 1;
         }
 
         .user-info {
@@ -201,17 +210,20 @@ function Users() {
           align-items: center;
           gap: 10px;
           color: #4a5568;
+          padding: 8px;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e9ecef;
         }
 
         .info-item svg {
           color: #1a237e;
           font-size: 1.1rem;
+          min-width: 20px;
         }
 
-        .pincode-label {
-          font-weight: 600;
-          color: #1a237e;
-          min-width: 40px;
+        .info-item span {
+          word-break: break-word;
         }
 
         .user-footer {
@@ -231,6 +243,11 @@ function Users() {
           font-size: 0.9rem;
           font-weight: 500;
           text-transform: capitalize;
+        }
+
+        .admin-role {
+          background: #fff3e0;
+          color: #f57c00;
         }
 
         .join-date {

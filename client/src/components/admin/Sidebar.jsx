@@ -22,6 +22,11 @@ function Sidebar({ activeSection, setActiveSection }) {
       id: 'users',
       label: 'Users',
       icon: FaUsers
+    },
+    {
+      id: 'email-marketing',
+      label: 'Email Marketing',
+      icon: FaEnvelope
     }
   ];
 
