@@ -28,9 +28,9 @@ function ResetPassword() {
       return;
     }
 
-    // Verify token format
-    if (!/^[a-f0-9]{64}$/.test(token)) {
-      console.error('Invalid token format:', token);
+    // Verify token format - allow any non-empty string
+    if (!token.trim()) {
+      console.error('Empty token provided');
       setError('Invalid reset token format');
       setTimeout(() => navigate('/login'), 3000);
       return;
@@ -65,18 +65,22 @@ function ResetPassword() {
       const apiEndpoint = `${config.apiUrl}/user/reset-password`;
       console.log('Reset password API endpoint:', apiEndpoint);
       
-      const response = await axios.post(apiEndpoint, 
-        { 
-          newPassword: password,
-          token: token
+      const requestData = { 
+        newPassword: password,
+        token: token
+      };
+      console.log('Sending reset password request:', {
+        endpoint: apiEndpoint,
+        tokenLength: token.length,
+        hasPassword: !!password
+      });
+      
+      const response = await axios.post(apiEndpoint, requestData, {
+        headers: {
+          'Content-Type': 'application/json'
         },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
+        timeout: 10000
+      });
 
       console.log('Reset password response:', response.data);
 

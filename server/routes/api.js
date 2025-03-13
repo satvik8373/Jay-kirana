@@ -808,7 +808,11 @@ router.post('/user/forgot-password', async (req, res) => {
 
 // Reset Password Route
 router.post('/user/reset-password', async (req, res) => {
-  console.log('Received reset password request:', req.body);
+  console.log('Received reset password request:', {
+    token: req.body.token ? 'Present' : 'Missing',
+    newPassword: req.body.newPassword ? 'Present' : 'Missing'
+  });
+  
   try {
     const { token, newPassword } = req.body;
 
@@ -823,7 +827,7 @@ router.post('/user/reset-password', async (req, res) => {
       resetTokenExpiry: { $gt: Date.now() }
     });
 
-    console.log('User found:', user ? 'Yes' : 'No');
+    console.log('User found with reset token:', user ? 'Yes' : 'No');
 
     if (!user) {
       console.log('Invalid or expired reset token');

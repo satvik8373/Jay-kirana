@@ -52,8 +52,8 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetToken: String,
+  resetTokenExpiry: Date
 }, {
   timestamps: true
 });
@@ -71,8 +71,8 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
-  delete user.resetPasswordToken;
-  delete user.resetPasswordExpires;
+  delete user.resetToken;
+  delete user.resetTokenExpiry;
   return user;
 };
 
