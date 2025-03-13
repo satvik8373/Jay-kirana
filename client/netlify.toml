@@ -1,0 +1,19 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[[redirects]]
+  from = "/reset-password/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[headers]
+  for = "/*"
+    [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate"
+    X-Frame-Options = "DENY" 
