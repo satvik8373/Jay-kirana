@@ -18,7 +18,7 @@ function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.apiUrl}/users`);
+      const response = await axios.get(`${config.apiUrl}/user/all`);
       console.log('Users data:', response.data);
       setUsers(response.data);
       setError(null);
