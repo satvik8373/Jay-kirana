@@ -15,10 +15,23 @@ function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Debug logging for route and token
+    console.log('ResetPassword component mounted');
+    console.log('Current URL:', window.location.href);
+    console.log('Token from params:', token);
+
     // Validate token presence
     if (!token) {
       console.error('No reset token provided');
       setError('Invalid or missing reset token');
+      setTimeout(() => navigate('/login'), 3000);
+      return;
+    }
+
+    // Verify token format
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      console.error('Invalid token format:', token);
+      setError('Invalid reset token format');
       setTimeout(() => navigate('/login'), 3000);
       return;
     }
@@ -49,15 +62,18 @@ function ResetPassword() {
 
     try {
       console.log('Attempting password reset with token:', token);
-      console.log('Reset password API endpoint:', `${config.apiUrl}/reset-password/${token}`);
+      const apiEndpoint = `${config.apiUrl}/reset-password/${token}`;
+      console.log('Reset password API endpoint:', apiEndpoint);
       
-      const response = await axios.post(`${config.apiUrl}/reset-password/${token}`, {
-        newPassword: password
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await axios.post(apiEndpoint, 
+        { newPassword: password },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000 // 10 second timeout
         }
-      });
+      );
 
       console.log('Reset password response:', response.data);
 
@@ -69,17 +85,20 @@ function ResetPassword() {
       console.error('Reset password error:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status
+        status: err.response?.status,
+        url: err.config?.url
       });
 
       if (err.response?.status === 400) {
         setError(err.response.data.error || 'Invalid or expired reset token');
       } else if (err.response?.status === 404) {
-        setError('Reset token not found or has expired');
+        setError('Reset token not found or has expired. Please request a new reset link.');
       } else if (err.response?.status === 500) {
         setError('Server error. Please try again later.');
       } else if (err.code === 'ERR_NETWORK') {
         setError('Network error. Please check your connection and try again.');
+      } else if (err.code === 'ECONNABORTED') {
+        setError('Request timed out. Please try again.');
       } else {
         setError('Failed to reset password. Please request a new reset link.');
       }
