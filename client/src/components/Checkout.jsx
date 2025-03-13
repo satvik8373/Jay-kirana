@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { FaShoppingBag, FaTruck, FaCreditCard, FaArrowLeft } from 'react-icons/fa';
+import config from '../config';
 
 function Checkout({ cart, onCheckout }) {
   const [form, setForm] = useState({ name: '', address: '', phone: '' });
@@ -71,16 +72,22 @@ function Checkout({ cart, onCheckout }) {
         phone: form.phone.trim()
       };
 
-      const response = await axios.post('/api/orders', orderData);
+      console.log('Submitting order:', orderData);
+      const response = await axios.post(`${config.apiUrl}/orders`, orderData);
+      console.log('Order response:', response.data);
       
       if (response.data) {
         onCheckout();
-        alert(`Order placed successfully! Your order ID is: ${response.data.orderId}`);
+        alert(`Order placed successfully! Your order ID is: ${response.data.orderId || response.data._id}`);
         navigate('/');
       }
     } catch (err) {
-      console.error('Error placing order:', err);
-      setError('Failed to place order. Please try again.');
+      console.error('Error placing order:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      setError(err.response?.data?.error || 'Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
