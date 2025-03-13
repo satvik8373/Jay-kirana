@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import config from '../config';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -18,58 +17,39 @@ function ForgotPassword() {
 
     try {
       console.log('Sending password reset request for email:', email);
-      console.log('API URL:', config.apiUrl);
-      
-      // Trim the email to remove any accidental spaces
-      const trimmedEmail = email.trim().toLowerCase();
-      console.log('Sending request with trimmed email:', trimmedEmail);
-      
-      const response = await axios.post(`${config.apiUrl}/user/forgot-password`, 
-        { 
-          email: trimmedEmail,
-          clientUrl: 'https://jay-kirana.onrender.com/reset-password'
-        },
+      const response = await axios.post('http://localhost:5000/api/forgot-password', // Changed port to 5000
+        { email },
         {
           headers: {
             'Content-Type': 'application/json'
           },
-          validateStatus: function (status) {
-            return status < 500; // Resolve only if the status code is less than 500
-          }
+          withCredentials: true, // Added to handle CORS
+          timeout: 10000 // 10 second timeout
         }
       );
       
       console.log('Password reset response:', response.data);
-
-      if (response.status === 200) {
-        setSuccess('Password reset instructions have been sent to your email. Please check your inbox.');
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-      } else {
-        throw new Error('Unexpected response status: ' + response.status);
-      }
+      setSuccess('Password reset instructions have been sent to your email.');
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
     } catch (err) {
       console.error('Password reset error:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status,
-        email: email.trim().toLowerCase(),
-        endpoint: `${config.apiUrl}/user/forgot-password`
+        status: err.response?.status
       });
       
       if (err.response?.status === 404) {
-        setError('No account found with this email address. Please check your email and try again.');
+        setError('No account found with this email address.');
       } else if (err.response?.status === 400) {
-        setError(err.response.data?.message || err.response.data?.error || 'Please provide a valid email address.');
+        setError(err.response.data.error || 'Please provide a valid email address.');
       } else if (err.code === 'ECONNABORTED') {
         setError('Request timed out. Please try again.');
       } else if (err.response?.status === 500) {
         setError('Server error occurred. Please try again later.');
-      } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check your connection and try again.');
       } else {
-        setError('Failed to process password reset request. Please try again later.');
+        setError(err.response?.data?.error || 'Failed to process password reset request. Please try again later.');
       }
     } finally {
       setIsLoading(false);
