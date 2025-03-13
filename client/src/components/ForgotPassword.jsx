@@ -18,13 +18,12 @@ function ForgotPassword() {
 
     try {
       console.log('Sending password reset request for email:', email);
-      const apiUrl = config.apiUrl.replace(/\/$/, ''); // Remove trailing slash if present
-      console.log('API URL:', apiUrl);
+      console.log('API URL:', config.apiUrl);
       
-      const response = await axios.post(`${apiUrl}/auth/forgot-password`, // Updated endpoint
+      const response = await axios.post(`${config.apiUrl}/auth/forgot-password`, 
         { 
           email,
-          clientUrl: 'https://jay-kirana.onrender.com/reset-password' // Changed to clientUrl
+          resetUrl: 'https://jay-kirana.onrender.com/reset-password' // Base URL for reset password
         },
         {
           headers: {
@@ -34,16 +33,15 @@ function ForgotPassword() {
       );
       
       console.log('Password reset response:', response.data);
-      setSuccess('Password reset instructions have been sent to your email. Please check your inbox.');
+      setSuccess('Password reset instructions have been sent to your email.');
       setTimeout(() => {
-        navigate('/login');
+        navigate('/');
       }, 3000);
     } catch (err) {
       console.error('Password reset error:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status,
-        url: err.config?.url
+        status: err.response?.status
       });
       
       if (err.response?.status === 404) {
@@ -55,7 +53,7 @@ function ForgotPassword() {
       } else if (err.response?.status === 500) {
         setError('Server error occurred. Please try again later.');
       } else {
-        setError('Failed to send reset email. Please try again later.');
+        setError(err.response?.data?.error || 'Failed to process password reset request. Please try again later.');
       }
     } finally {
       setIsLoading(false);

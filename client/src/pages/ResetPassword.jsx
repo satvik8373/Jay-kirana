@@ -62,14 +62,13 @@ function ResetPassword() {
 
     try {
       console.log('Attempting password reset with token:', token);
-      const apiUrl = config.apiUrl.replace(/\/$/, ''); // Remove trailing slash if present
-      const apiEndpoint = `${apiUrl}/auth/reset-password`; // Updated endpoint
+      const apiEndpoint = `${config.apiUrl}/auth/reset-password/${token}`;
       console.log('Reset password API endpoint:', apiEndpoint);
       
       const response = await axios.post(apiEndpoint, 
         { 
-          token,
-          newPassword: password
+          newPassword: password,
+          token: token // Include token in body as well for additional security
         },
         {
           headers: {
