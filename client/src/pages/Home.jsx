@@ -17,8 +17,9 @@ function Home({ addToCart }) {
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get(`${config.apiUrl}/api/products`);
-      setProducts(response.data);
+      console.log('Fetching products from:', `${config.apiUrl}/products`);
+      const response = await axios.get(`${config.apiUrl}/products`);
+      setProducts(response.data || []);
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products. Please try again later.');

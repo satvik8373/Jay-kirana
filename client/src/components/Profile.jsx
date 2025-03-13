@@ -45,6 +45,9 @@ function Profile() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
     const loadUserData = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -57,8 +60,11 @@ function Profile() {
         const response = await axios.get(`${config.apiUrl}/user/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
-          }
+          },
+          signal: controller.signal
         });
+
+        if (!isMounted) return;
 
         const userData = response.data;
         if (!userData) {
@@ -75,28 +81,58 @@ function Profile() {
           bio: userData.bio || ''
         });
 
-        // Update avatar URL
         if (userData.avatar) {
-          setAvatarPreview(`${config.apiUrl}/uploads/${userData.avatar}`);
+          let avatarPath;
+          if (userData.avatar.startsWith('http')) {
+            avatarPath = userData.avatar;
+          } else if (userData.avatar.startsWith('/')) {
+            avatarPath = `${config.apiUrl}${userData.avatar}`;
+          } else if (userData.avatar.includes('uploads/')) {
+            avatarPath = `${config.apiUrl}/${userData.avatar}`;
+          } else {
+            avatarPath = `${config.apiUrl}/uploads/avatars/${userData.avatar}`;
+          }
+          console.log('Setting avatar path:', avatarPath);
+          setAvatarPreview(avatarPath);
         }
 
-        // Update login state if needed
+        // Only update login state if we have new data
         if (JSON.stringify(userData) !== JSON.stringify(user)) {
           await login({ token, user: userData });
         }
       } catch (err) {
+        if (!isMounted) return;
+        if (axios.isCancel(err)) {
+          console.log('Request cancelled');
+          return;
+        }
+
         console.error('Failed to load user data:', err);
         const errorMessage = err.response?.data?.error || err.message || 'Failed to load profile data';
         
         if (err.response?.status === 401) {
+          console.error('Authentication error:', errorMessage);
           navigate('/login');
+        } else if (err.response?.status === 404) {
+          setError('User profile not found');
+        } else if (err.response?.status === 500) {
+          setError('Server error. Please try again later.');
         } else {
           setError(errorMessage);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
 
     loadUserData();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, [navigate, login, user]);
 
   useEffect(() => {
@@ -111,9 +147,22 @@ function Profile() {
         bio: user.bio || ''
       });
 
-      // Update avatar preview
+      // Update avatar URL handling
       if (user.avatar) {
-        setAvatarPreview(`${config.apiUrl}/uploads/${user.avatar}`);
+        let avatarPath;
+        if (user.avatar.startsWith('http')) {
+          avatarPath = user.avatar;
+        } else if (user.avatar.startsWith('/')) {
+          avatarPath = `${config.apiUrl}${user.avatar}`;
+        } else if (user.avatar.includes('uploads/')) {
+          avatarPath = `${config.apiUrl}/${user.avatar}`;
+        } else {
+          avatarPath = `${config.apiUrl}/uploads/avatars/${user.avatar}`;
+        }
+        console.log('Setting avatar path:', avatarPath);
+        setAvatarPreview(avatarPath);
+      } else {
+        setAvatarPreview(null);
       }
     }
   }, [user]);
@@ -155,6 +204,7 @@ function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type and size
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
@@ -169,6 +219,7 @@ function Profile() {
     }
 
     try {
+      setLoading(true);
       setError('');
       setSuccess('');
       
@@ -180,7 +231,13 @@ function Profile() {
         throw new Error('Authentication token not found');
       }
 
-      // Create a local preview
+      console.log('Uploading avatar...', {
+        file: file.name,
+        size: file.size,
+        type: file.type
+      });
+
+      // Create a local preview immediately
       const previewUrl = URL.createObjectURL(file);
       setAvatarPreview(previewUrl);
 
@@ -195,26 +252,58 @@ function Profile() {
         }
       );
 
+      console.log('Upload response:', response.data);
+
       if (response.data && response.data.avatar) {
+        let avatarPath;
+        if (response.data.avatar.startsWith('http')) {
+          avatarPath = response.data.avatar;
+        } else if (response.data.avatar.startsWith('/')) {
+          avatarPath = `${config.apiUrl}${response.data.avatar}`;
+        } else if (response.data.avatar.includes('uploads/')) {
+          avatarPath = `${config.apiUrl}/${response.data.avatar}`;
+        } else {
+          avatarPath = `${config.apiUrl}/uploads/avatars/${response.data.avatar}`;
+        }
+        
         const updatedUser = { ...user, avatar: response.data.avatar };
-        await login({ token: token, user: updatedUser });
+        await login({ token, user: updatedUser });
         showSuccessMessage('Profile picture updated successfully!');
+        setAvatarPreview(avatarPath);
+      } else {
+        throw new Error('Invalid response from server');
       }
     } catch (err) {
       console.error('Avatar upload error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to update profile picture');
-      
-      // Reset preview if upload fails
+      setError(
+        err.response?.data?.message || 
+        err.response?.data?.error || 
+        err.message || 
+        'Failed to update profile picture'
+      );
       if (user?.avatar) {
-        setAvatarPreview(`${config.apiUrl}/uploads/${user.avatar}`);
+        let avatarPath;
+        if (user.avatar.startsWith('http')) {
+          avatarPath = user.avatar;
+        } else if (user.avatar.startsWith('/')) {
+          avatarPath = `${config.apiUrl}${user.avatar}`;
+        } else if (user.avatar.includes('uploads/')) {
+          avatarPath = `${config.apiUrl}/${user.avatar}`;
+        } else {
+          avatarPath = `${config.apiUrl}/uploads/avatars/${user.avatar}`;
+        }
+        setAvatarPreview(avatarPath);
       } else {
         setAvatarPreview(null);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
     setSuccess('');
 
@@ -245,6 +334,8 @@ function Profile() {
       } else {
         setError(err.response?.data?.error || 'Failed to update profile');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -287,7 +378,7 @@ function Profile() {
               src={avatarPreview} 
               alt="Profile" 
               className="avatar-image"
-              onError={() => setAvatarPreview(null)}
+              onError={handleAvatarError}
             />
           ) : (
             <div className="default-avatar">
@@ -296,6 +387,7 @@ function Profile() {
           )}
           <div className="avatar-overlay">
             <FaCamera className="camera-icon" />
+            {loading && <div className="loading-overlay">Uploading...</div>}
           </div>
           <input
             type="file"
@@ -529,7 +621,6 @@ function Profile() {
           justify-content: center;
           opacity: 0;
           transition: opacity 0.3s ease;
-          border-radius: 50%;
         }
 
         .camera-icon {
@@ -772,6 +863,20 @@ function Profile() {
           .profile-header-bg {
             height: 160px;
           }
+        }
+
+        .loading-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
         }
 
         .logout-section {
