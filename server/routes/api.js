@@ -709,7 +709,7 @@ router.delete('/products/:id', async (req, res) => {
 });
 
 // Forgot Password Route
-router.post('/forgot-password', async (req, res) => {
+router.post('/user/forgot-password', async (req, res) => {
   console.log('Received forgot password request:', req.body);
   try {
     const { email } = req.body;
