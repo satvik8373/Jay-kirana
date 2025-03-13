@@ -15,10 +15,17 @@ function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Validate token presence
     if (!token) {
-      setError('Invalid reset token');
+      console.error('No reset token provided');
+      setError('Invalid or missing reset token');
       setTimeout(() => navigate('/login'), 3000);
+      return;
     }
+
+    // Log the token for debugging
+    console.log('Reset token received:', token);
+    console.log('Current API URL:', config.apiUrl);
   }, [token, navigate]);
 
   const handleSubmit = async (e) => {
@@ -41,31 +48,40 @@ function ResetPassword() {
     }
 
     try {
-      console.log('Sending reset password request with token:', token);
-      console.log('API URL:', config.apiUrl);
+      console.log('Attempting password reset with token:', token);
+      console.log('Reset password API endpoint:', `${config.apiUrl}/reset-password/${token}`);
       
       const response = await axios.post(`${config.apiUrl}/reset-password/${token}`, {
         newPassword: password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      console.log('Reset password response:', response);
+      console.log('Reset password response:', response.data);
 
-      if (response.status === 200) {
-        setSuccess('Password reset successful. Redirecting to login...');
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-      }
+      setSuccess('Password reset successful! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err) {
-      console.error('Reset password error:', err);
+      console.error('Reset password error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+
       if (err.response?.status === 400) {
         setError(err.response.data.error || 'Invalid or expired reset token');
+      } else if (err.response?.status === 404) {
+        setError('Reset token not found or has expired');
       } else if (err.response?.status === 500) {
         setError('Server error. Please try again later.');
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check your connection.');
+        setError('Network error. Please check your connection and try again.');
       } else {
-        setError('Failed to reset password. Please try again.');
+        setError('Failed to reset password. Please request a new reset link.');
       }
     } finally {
       setIsLoading(false);
