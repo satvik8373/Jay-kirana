@@ -807,7 +807,7 @@ router.post('/user/forgot-password', async (req, res) => {
 });
 
 // Reset Password Route
-router.post('/reset-password', async (req, res) => {
+router.post('/user/reset-password', async (req, res) => {
   console.log('Received reset password request:', req.body);
   try {
     const { token, newPassword } = req.body;
