@@ -1,20 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { FaBox, FaShoppingBag, FaUsers, FaSignOutAlt } from 'react-icons/fa';
+import { FaBox, FaShoppingBag, FaSignOutAlt } from 'react-icons/fa';
 import AddProduct from './AddProduct';
 import ManageProducts from './ManageProducts';
 import Orders from './Orders';
-import Users from './Users';
 import { useAuth } from '../../contexts/AuthContext';
 
 function AdminDashboard() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is admin, if not redirect to home
+    if (!user?.isAdmin) {
+      console.log('Non-admin access attempt:', { user });
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  // If user is not admin, don't render the dashboard
+  if (!user?.isAdmin) {
+    return null;
+  }
 
   return (
     <div className="admin-dashboard">
@@ -29,13 +41,13 @@ function AdminDashboard() {
           <NavLink to="/admin/orders" className={({ isActive }) => isActive ? 'active' : ''}>
             <FaShoppingBag /> Orders
           </NavLink>
-          <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FaUsers /> Users
-          </NavLink>
         </div>
-        <button onClick={handleLogout} className="logout-btn">
-          <FaSignOutAlt /> Logout
-        </button>
+        <div className="admin-info">
+          <div className="admin-email">{user.email}</div>
+          <button onClick={handleLogout} className="logout-btn">
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
       </nav>
 
       <div className="admin-content">
@@ -43,7 +55,6 @@ function AdminDashboard() {
           <Route path="/add-product" element={<AddProduct />} />
           <Route path="/manage-products" element={<ManageProducts />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/users" element={<Users />} />
           <Route index element={<Orders />} />
         </Routes>
       </div>
@@ -95,11 +106,27 @@ function AdminDashboard() {
           color: white;
         }
 
+        .admin-info {
+          padding: 15px;
+          border-top: 1px solid #eee;
+          margin-top: 20px;
+        }
+
+        .admin-email {
+          color: #1a237e;
+          font-size: 0.9rem;
+          margin-bottom: 10px;
+          text-align: center;
+          word-break: break-all;
+        }
+
         .logout-btn {
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 10px;
           padding: 12px 15px;
+          width: 100%;
           background: none;
           border: none;
           color: #dc2626;
@@ -147,12 +174,27 @@ function AdminDashboard() {
             padding: 10px;
           }
 
-          .logout-btn {
+          .admin-info {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 0;
+            right: 0;
+            left: 0;
             background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .admin-email {
+            margin-bottom: 0;
+            margin-right: 10px;
+          }
+
+          .logout-btn {
+            width: auto;
           }
         }
       `}</style>
