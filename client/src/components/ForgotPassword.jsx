@@ -23,7 +23,8 @@ function ForgotPassword() {
       const response = await axios.post(`${config.apiUrl}/auth/forgot-password`, 
         { 
           email,
-          resetUrl: 'https://jay-kirana.onrender.com/reset-password' // Base URL for reset password
+          // The client-side reset password URL
+          clientUrl: 'https://jay-kirana.onrender.com/reset-password'
         },
         {
           headers: {
