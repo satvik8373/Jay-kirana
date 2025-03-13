@@ -1,87 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import config from '../../config';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity, FaSearch } from 'react-icons/fa';
-import { useAuth } from '../../contexts/AuthContext';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity } from 'react-icons/fa';
 
 function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('email');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const { token } = useAuth();
 
   useEffect(() => {
     fetchUsers();
-  }, [token]);
+  }, []);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.apiUrl}/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      console.log('Users data:', response.data);
+      const response = await axios.get(`${config.apiUrl}/users`);
       setUsers(response.data);
-      setError(null);
     } catch (err) {
-      console.error('Error fetching users:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      });
-      setError('Failed to load users. ' + (err.response?.data?.error || err.message));
+      console.error('Error fetching users:', err);
+      setError('Failed to load users');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortUsers = (usersToSort) => {
-    return [...usersToSort].sort((a, b) => {
-      let aValue = a[sortField] || '';
-      let bValue = b[sortField] || '';
-      
-      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
-      
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  };
-
-  const filterUsers = () => {
-    const filtered = users.filter(user => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        (user.email?.toLowerCase().includes(searchLower)) ||
-        (user.name?.toLowerCase().includes(searchLower)) ||
-        (user.phone?.toLowerCase().includes(searchLower)) ||
-        (user.city?.toLowerCase().includes(searchLower))
-      );
-    });
-    return sortUsers(filtered);
-  };
+  const filteredUsers = users.filter(user => 
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone?.includes(searchTerm) ||
+    user.city?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="users-dashboard">
-      <div className="dashboard-header">
-        <h2>User Management</h2>
+    <div className="admin-section">
+      <div className="users-header">
+        <h2>Users Management</h2>
         <div className="search-bar">
-          <FaSearch className="search-icon" />
           <input
             type="text"
             placeholder="Search users..."
@@ -96,147 +52,191 @@ function Users() {
       {loading ? (
         <div className="loading">Loading users...</div>
       ) : (
-        <div className="users-table-container">
-          <table className="users-table">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('email')}>
-                  <FaEnvelope /> Email
-                  {sortField === 'email' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? ' ↑' : ' ↓'}</span>
-                  )}
-                </th>
-                <th onClick={() => handleSort('name')}>
-                  <FaUser /> Name
-                  {sortField === 'name' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? ' ↑' : ' ↓'}</span>
-                  )}
-                </th>
-                <th onClick={() => handleSort('phone')}>
-                  <FaPhone /> Phone
-                  {sortField === 'phone' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? ' ↑' : ' ↓'}</span>
-                  )}
-                </th>
-                <th onClick={() => handleSort('address')}>
-                  <FaMapMarkerAlt /> Address
-                  {sortField === 'address' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? ' ↑' : ' ↓'}</span>
-                  )}
-                </th>
-                <th onClick={() => handleSort('city')}>
-                  <FaCity /> City
-                  {sortField === 'city' && (
-                    <span className="sort-indicator">{sortDirection === 'asc' ? ' ↑' : ' ↓'}</span>
-                  )}
-                </th>
-                <th>Pincode</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filterUsers().map((user) => (
-                <tr key={user._id}>
-                  <td>{user.email}</td>
-                  <td>{user.name || '-'}</td>
-                  <td>{user.phone || '-'}</td>
-                  <td>{user.address || '-'}</td>
-                  <td>{user.city || '-'}</td>
-                  <td>{user.pincode || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="users-grid">
+          {filteredUsers.map(user => (
+            <div key={user._id} className="user-card">
+              <div className="user-header">
+                <FaUser className="user-icon" />
+                <h3>{user.name || 'No Name'}</h3>
+              </div>
+              
+              <div className="user-info">
+                <div className="info-item">
+                  <FaEnvelope />
+                  <span>{user.email}</span>
+                </div>
+                
+                {user.phone && (
+                  <div className="info-item">
+                    <FaPhone />
+                    <span>{user.phone}</span>
+                  </div>
+                )}
+                
+                {user.address && (
+                  <div className="info-item">
+                    <FaMapMarkerAlt />
+                    <span>{user.address}</span>
+                  </div>
+                )}
+                
+                {user.city && (
+                  <div className="info-item">
+                    <FaCity />
+                    <span>{user.city}</span>
+                  </div>
+                )}
+
+                {user.pincode && (
+                  <div className="info-item">
+                    <span className="pincode-label">PIN:</span>
+                    <span>{user.pincode}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="user-footer">
+                <span className="user-role">{user.role || 'customer'}</span>
+                <span className="join-date">
+                  Joined: {new Date(user.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       <style jsx>{`
-        .users-dashboard {
+        .admin-section {
           padding: 20px;
           background: white;
-          border-radius: 10px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .dashboard-header {
+        .users-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 20px;
-          padding-bottom: 20px;
+          padding-bottom: 15px;
           border-bottom: 2px solid #f0f0f0;
         }
 
         h2 {
           color: #1a237e;
-          margin: 0;
           font-size: 1.8rem;
+          margin: 0;
         }
 
-        .search-bar {
-          position: relative;
+        .search-bar input {
+          padding: 10px 15px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
           width: 300px;
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #666;
-        }
-
-        input {
-          width: 100%;
-          padding: 10px 10px 10px 35px;
-          border: 1px solid #ddd;
-          border-radius: 25px;
-          font-size: 0.9rem;
+          font-size: 1rem;
           transition: all 0.3s ease;
         }
 
-        input:focus {
-          outline: none;
+        .search-bar input:focus {
           border-color: #1a237e;
+          outline: none;
           box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
         }
 
-        .users-table-container {
-          overflow-x: auto;
-        }
-
-        .users-table {
-          width: 100%;
-          border-collapse: collapse;
+        .users-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 20px;
           margin-top: 20px;
         }
 
-        .users-table th,
-        .users-table td {
-          padding: 12px 15px;
-          text-align: left;
-          border-bottom: 1px solid #eee;
-        }
-
-        .users-table th {
+        .user-card {
           background: #f8f9fa;
+          border-radius: 10px;
+          padding: 20px;
+          border: 1px solid #e9ecef;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .user-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #e9ecef;
+        }
+
+        .user-icon {
+          font-size: 1.5rem;
           color: #1a237e;
+        }
+
+        .user-header h3 {
+          margin: 0;
+          color: #1a237e;
+          font-size: 1.2rem;
+        }
+
+        .user-info {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .info-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #4a5568;
+        }
+
+        .info-item svg {
+          color: #1a237e;
+          font-size: 1.1rem;
+        }
+
+        .pincode-label {
           font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.3s ease;
-          white-space: nowrap;
-        }
-
-        .users-table th:hover {
-          background: #e8eaf6;
-        }
-
-        .users-table tbody tr:hover {
-          background: #f5f5f5;
-        }
-
-        .sort-indicator {
           color: #1a237e;
-          margin-left: 5px;
+          min-width: 40px;
+        }
+
+        .user-footer {
+          margin-top: 15px;
+          padding-top: 15px;
+          border-top: 1px solid #e9ecef;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .user-role {
+          background: #e8eaf6;
+          color: #1a237e;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          text-transform: capitalize;
+        }
+
+        .join-date {
+          color: #666;
+          font-size: 0.9rem;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 40px;
+          color: #666;
+          font-size: 1.1rem;
         }
 
         .error-message {
@@ -247,26 +247,22 @@ function Users() {
           margin-bottom: 20px;
         }
 
-        .loading {
-          text-align: center;
-          padding: 20px;
-          color: #666;
-        }
-
         @media (max-width: 768px) {
-          .dashboard-header {
+          .users-header {
             flex-direction: column;
             gap: 15px;
           }
 
-          .search-bar {
+          .search-bar input {
             width: 100%;
           }
 
-          .users-table th,
-          .users-table td {
-            padding: 8px 10px;
-            font-size: 0.9rem;
+          .users-grid {
+            grid-template-columns: 1fr;
+          }
+
+          h2 {
+            font-size: 1.5rem;
           }
         }
       `}</style>

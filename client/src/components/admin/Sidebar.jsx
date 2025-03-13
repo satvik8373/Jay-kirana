@@ -1,71 +1,45 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { FaBox, FaShoppingBag, FaUsers, FaSignOutAlt, FaPlus } from 'react-icons/fa';
+import { Link, useLocation } from 'react-router-dom';
+import { FaBox, FaClipboardList, FaUsers, FaPlus } from 'react-icons/fa';
 
-function Sidebar({ activeSection, setActiveSection }) {
-  const menuItems = [
-    {
-      title: 'Add Product',
-      icon: <FaPlus />,
-      path: 'add-product'
-    },
-    {
-      title: 'Manage Products',
-      icon: <FaBox />,
-      path: 'manage-products'
-    },
-    {
-      title: 'Orders',
-      icon: <FaShoppingBag />,
-      path: 'orders'
-    },
-    {
-      title: 'Users',
-      icon: <FaUsers />,
-      path: 'users'
-    }
-  ];
+function Sidebar() {
+  const location = useLocation();
+  
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   return (
-    <div className="sidebar">
-      <div className="logo">
-        <h2>Admin Panel</h2>
-      </div>
+    <div className="admin-sidebar">
       <nav>
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
-          >
-            {item.icon}
-            <span>{item.title}</span>
-          </NavLink>
-        ))}
+        <Link to="/admin" className={`nav-item ${isActive('/admin') ? 'active' : ''}`}>
+          <FaBox />
+          <span>Manage Products</span>
+        </Link>
+        
+        <Link to="/admin/add-product" className={`nav-item ${isActive('/admin/add-product') ? 'active' : ''}`}>
+          <FaPlus />
+          <span>Add Product</span>
+        </Link>
+        
+        <Link to="/admin/orders" className={`nav-item ${isActive('/admin/orders') ? 'active' : ''}`}>
+          <FaClipboardList />
+          <span>Orders</span>
+        </Link>
+
+        <Link to="/admin/users" className={`nav-item ${isActive('/admin/users') ? 'active' : ''}`}>
+          <FaUsers />
+          <span>Users</span>
+        </Link>
       </nav>
 
       <style jsx>{`
-        .sidebar {
-          width: 250px;
+        .admin-sidebar {
           background: white;
           padding: 20px;
-          height: 100%;
-          position: fixed;
-          left: 0;
-          top: 60px;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo {
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .logo h2 {
-          margin: 0;
-          font-size: 1.5rem;
-          font-weight: 600;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          height: fit-content;
         }
 
         nav {
@@ -79,15 +53,14 @@ function Sidebar({ activeSection, setActiveSection }) {
           align-items: center;
           gap: 10px;
           padding: 12px 15px;
-          color: #666;
+          color: #1a237e;
           text-decoration: none;
           border-radius: 8px;
           transition: all 0.3s ease;
         }
 
         .nav-item:hover {
-          background: #f0f0f0;
-          color: #1a237e;
+          background: #e8eaf6;
         }
 
         .nav-item.active {
@@ -95,27 +68,21 @@ function Sidebar({ activeSection, setActiveSection }) {
           color: white;
         }
 
+        .nav-item svg {
+          font-size: 1.2rem;
+        }
+
         @media (max-width: 768px) {
-          .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-            top: 0;
-            padding: 10px;
-          }
-
-          .logo {
-            display: none;
-          }
-
-          nav {
-            flex-direction: row;
-            overflow-x: auto;
-            padding-bottom: 10px;
+          .admin-sidebar {
+            padding: 15px;
           }
 
           .nav-item {
-            white-space: nowrap;
+            padding: 10px;
+          }
+
+          .nav-item span {
+            font-size: 0.9rem;
           }
         }
       `}</style>

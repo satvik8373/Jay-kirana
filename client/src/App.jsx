@@ -12,6 +12,7 @@ import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Profile from './components/Profile';
+import Users from './components/admin/Users';
 import './index.css';
 
 function ProtectedRoute({ children, requireAdmin }) {
@@ -121,6 +122,11 @@ function App() {
               <Route path="/checkout" element={
                 <ProtectedRoute>
                   <Checkout cart={cart} onCheckout={clearCart} />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <Users />
                 </ProtectedRoute>
               } />
               <Route path="*" element={
