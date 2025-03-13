@@ -11,18 +11,43 @@ function ResetPassword() {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isTokenValid, setIsTokenValid] = useState(false);
   const { token } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid reset token');
-      setTimeout(() => navigate('/'), 3000);
-    }
+    const verifyToken = async () => {
+      if (!token) {
+        setError('Invalid reset token');
+        setTimeout(() => navigate('/login'), 3000);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${config.apiUrl}/verify-reset-token/${token}`);
+        if (response.data.valid) {
+          setIsTokenValid(true);
+        } else {
+          setError('Invalid or expired reset token');
+          setTimeout(() => navigate('/login'), 3000);
+        }
+      } catch (err) {
+        console.error('Token verification error:', err);
+        setError('Invalid or expired reset token');
+        setTimeout(() => navigate('/login'), 3000);
+      }
+    };
+
+    verifyToken();
   }, [token, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isTokenValid) {
+      setError('Invalid or expired reset token');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setSuccess('');
@@ -52,7 +77,7 @@ function ResetPassword() {
       if (response.status === 200) {
         setSuccess('Password reset successful. Redirecting to login...');
         setTimeout(() => {
-          navigate('/');
+          navigate('/login');
         }, 3000);
       }
     } catch (err) {

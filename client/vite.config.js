@@ -1,5 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+import fs from 'fs';
+
+// Ensure _redirects file exists in public directory
+const redirectsContent = '/* /index.html 200';
+if (!fs.existsSync('public')) {
+  fs.mkdirSync('public');
+}
+fs.writeFileSync('public/_redirects', redirectsContent);
 
 export default defineConfig({
   plugins: [react()],
