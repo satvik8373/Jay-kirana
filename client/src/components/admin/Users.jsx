@@ -16,7 +16,13 @@ function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.apiUrl}/users`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get(`${config.apiUrl}/users/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setUsers(response.data);
     } catch (err) {
       console.error('Error fetching users:', err);
