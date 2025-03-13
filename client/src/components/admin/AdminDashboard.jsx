@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom';
-import { FaBox, FaShoppingBag, FaUsers, FaSignOutAlt } from 'react-icons/fa';
+import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { FaBox, FaShoppingBag, FaUsers, FaSignOutAlt, FaTachometerAlt } from 'react-icons/fa';
 import AddProduct from './AddProduct';
 import ManageProducts from './ManageProducts';
 import Orders from './Orders';
@@ -18,141 +18,181 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <nav className="admin-nav">
-        <div className="nav-links">
-          <NavLink to="add-product" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FaBox /> Add Product
-          </NavLink>
-          <NavLink to="manage-products" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FaBox /> Manage Products
-          </NavLink>
-          <NavLink to="orders" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FaShoppingBag /> Orders
-          </NavLink>
-          <NavLink to="users" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FaUsers /> Users
-          </NavLink>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>Admin Panel</h2>
         </div>
-        <button onClick={handleLogout} className="logout-btn">
-          <FaSignOutAlt /> Logout
-        </button>
-      </nav>
+        <nav className="sidebar-nav">
+          <NavLink to="/admin" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FaTachometerAlt />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/admin/add-product" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FaBox />
+            <span>Add Product</span>
+          </NavLink>
+          <NavLink to="/admin/manage-products" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FaBox />
+            <span>Manage Products</span>
+          </NavLink>
+          <NavLink to="/admin/orders" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FaShoppingBag />
+            <span>Orders</span>
+          </NavLink>
+          <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <FaUsers />
+            <span>Users</span>
+          </NavLink>
+        </nav>
+        <div className="sidebar-footer">
+          <button onClick={handleLogout} className="logout-btn">
+            <FaSignOutAlt />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
-      <div className="admin-content">
+      <main className="main-content">
         <Routes>
-          <Route path="add-product" element={<AddProduct />} />
-          <Route path="manage-products" element={<ManageProducts />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="users" element={<Users />} />
-          <Route path="" element={<Navigate to="orders" replace />} />
+          <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/manage-products" element={<ManageProducts />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/users" element={<Users />} />
+          <Route index element={<Orders />} />
         </Routes>
-      </div>
+      </main>
 
       <style jsx>{`
         .admin-dashboard {
           display: flex;
           min-height: 100vh;
           padding-top: 60px;
+          background: #f8f9fa;
         }
 
-        .admin-nav {
-          width: 250px;
-          background: white;
-          padding: 20px;
+        .sidebar {
+          width: 280px;
+          background: #1a237e;
+          color: white;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
           position: fixed;
           top: 60px;
           bottom: 0;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-links {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .admin-nav a {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 15px;
-          color: #666;
-          text-decoration: none;
-          border-radius: 8px;
+          left: 0;
+          z-index: 1000;
           transition: all 0.3s ease;
         }
 
-        .admin-nav a:hover {
-          background: #f0f0f0;
-          color: #1a237e;
+        .sidebar-header {
+          padding: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .admin-nav a.active {
-          background: #1a237e;
+        .sidebar-header h2 {
+          margin: 0;
+          font-size: 1.5rem;
           color: white;
+          font-weight: 500;
+        }
+
+        .sidebar-nav {
+          padding: 20px 0;
+          flex: 1;
+        }
+
+        .nav-link {
+          display: flex;
+          align-items: center;
+          padding: 12px 20px;
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          transition: all 0.3s ease;
+          border-left: 3px solid transparent;
+        }
+
+        .nav-link svg {
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
+        }
+
+        .nav-link span {
+          font-size: 0.95rem;
+        }
+
+        .nav-link:hover {
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+          border-left-color: #4CAF50;
+        }
+
+        .nav-link.active {
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+          border-left-color: #4CAF50;
+        }
+
+        .sidebar-footer {
+          padding: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .logout-btn {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 12px 15px;
-          background: none;
+          width: 100%;
+          padding: 12px;
+          background: rgba(220, 38, 38, 0.1);
+          color: #ff4444;
           border: none;
-          color: #dc2626;
-          cursor: pointer;
-          font-size: 1rem;
           border-radius: 8px;
+          cursor: pointer;
           transition: all 0.3s ease;
         }
 
-        .logout-btn:hover {
-          background: #fee2e2;
+        .logout-btn svg {
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
         }
 
-        .admin-content {
+        .logout-btn:hover {
+          background: rgba(220, 38, 38, 0.2);
+        }
+
+        .main-content {
           flex: 1;
-          margin-left: 250px;
+          margin-left: 280px;
           padding: 20px;
-          background: #f5f5f5;
+          background: #f8f9fa;
+          min-height: calc(100vh - 60px);
         }
 
         @media (max-width: 768px) {
-          .admin-dashboard {
-            flex-direction: column;
+          .sidebar {
+            width: 70px;
           }
 
-          .admin-nav {
-            width: 100%;
-            position: relative;
-            top: 0;
-            padding: 10px;
+          .sidebar-header h2,
+          .nav-link span,
+          .logout-btn span {
+            display: none;
           }
 
-          .nav-links {
-            flex-direction: row;
-            overflow-x: auto;
-            padding-bottom: 10px;
-          }
-
-          .admin-nav a {
-            white-space: nowrap;
-          }
-
-          .admin-content {
-            margin-left: 0;
-            padding: 10px;
-          }
-
+          .nav-link,
           .logout-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            padding: 15px;
+          }
+
+          .nav-link svg,
+          .logout-btn svg {
+            margin: 0;
+          }
+
+          .main-content {
+            margin-left: 70px;
           }
         }
       `}</style>

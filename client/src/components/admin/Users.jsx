@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import config from '../../config';
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity, FaSearch } from 'react-icons/fa';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -10,15 +11,20 @@ function Users() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('email');
   const [sortDirection, setSortDirection] = useState('asc');
+  const { token } = useAuth();
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.apiUrl}/user/all`);
+      const response = await axios.get(`${config.apiUrl}/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       console.log('Users data:', response.data);
       setUsers(response.data);
       setError(null);
