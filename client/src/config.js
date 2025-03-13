@@ -10,7 +10,7 @@ const config = {
   serverUploadUrl: isDevelopment
     ? 'http://localhost:5000/uploads'
     : 'https://jay-kirana-api.onrender.com/uploads'
-};c
+};
 
 console.log('Environment:', isDevelopment ? 'Development' : 'Production');
 console.log('Using API URL:', config.apiUrl);
