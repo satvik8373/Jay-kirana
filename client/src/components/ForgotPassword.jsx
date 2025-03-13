@@ -20,41 +20,55 @@ function ForgotPassword() {
       console.log('Sending password reset request for email:', email);
       console.log('API URL:', config.apiUrl);
       
+      // Trim the email to remove any accidental spaces
+      const trimmedEmail = email.trim().toLowerCase();
+      console.log('Sending request with trimmed email:', trimmedEmail);
+      
       const response = await axios.post(`${config.apiUrl}/auth/forgot-password`, 
         { 
-          email,
-          // The client-side reset password URL
+          email: trimmedEmail,
           clientUrl: 'https://jay-kirana.onrender.com/reset-password'
         },
         {
           headers: {
             'Content-Type': 'application/json'
+          },
+          validateStatus: function (status) {
+            return status < 500; // Resolve only if the status code is less than 500
           }
         }
       );
       
       console.log('Password reset response:', response.data);
-      setSuccess('Password reset instructions have been sent to your email.');
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+
+      if (response.status === 200) {
+        setSuccess('Password reset instructions have been sent to your email.');
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      } else {
+        throw new Error('Unexpected response status: ' + response.status);
+      }
     } catch (err) {
       console.error('Password reset error:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status
+        status: err.response?.status,
+        email: email.trim().toLowerCase()
       });
       
       if (err.response?.status === 404) {
-        setError('No account found with this email address.');
+        setError('No account found with this email address. Please check your email and try again.');
       } else if (err.response?.status === 400) {
-        setError(err.response.data.error || 'Please provide a valid email address.');
+        setError(err.response.data?.message || err.response.data?.error || 'Please provide a valid email address.');
       } else if (err.code === 'ECONNABORTED') {
         setError('Request timed out. Please try again.');
       } else if (err.response?.status === 500) {
         setError('Server error occurred. Please try again later.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Network error. Please check your connection and try again.');
       } else {
-        setError(err.response?.data?.error || 'Failed to process password reset request. Please try again later.');
+        setError('Failed to process password reset request. Please try again later.');
       }
     } finally {
       setIsLoading(false);
