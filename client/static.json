@@ -7,9 +7,12 @@
   },
   "headers": {
     "/**": {
-      "Cache-Control": "no-store, no-cache",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
       "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-      "X-Frame-Options": "DENY"
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff"
     }
-  }
+  },
+  "https_only": true,
+  "error_page": "index.html"
 } 
