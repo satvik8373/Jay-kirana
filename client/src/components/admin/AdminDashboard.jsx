@@ -64,10 +64,10 @@ function AdminDashboard() {
 
       <div className="main-content">
         <Routes>
-          <Route path="/add-product" element={<AddProduct />} />
-          <Route path="/manage-products" element={<ManageProducts />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/users" element={<Users />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="manage-products" element={<ManageProducts />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="users" element={<Users />} />
           <Route index element={<Orders />} />
         </Routes>
       </div>
