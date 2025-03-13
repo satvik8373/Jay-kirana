@@ -732,8 +732,8 @@ router.post('/forgot-password', async (req, res) => {
     console.log('Generated reset token:', resetToken);
 
     // Save reset token to user
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = resetTokenExpiry;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
     console.log('Reset token saved to user');
 
@@ -778,8 +778,8 @@ router.post('/forgot-password', async (req, res) => {
       });
       
       // Cleanup the reset token since email failed
-      user.resetToken = undefined;
-      user.resetTokenExpiry = undefined;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
       await user.save();
       
       throw new Error('Failed to send password reset email');
@@ -819,8 +819,8 @@ router.post('/reset-password', async (req, res) => {
 
     // Find user with valid reset token
     const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() }
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
     });
 
     console.log('User found:', user ? 'Yes' : 'No');
@@ -832,8 +832,8 @@ router.post('/reset-password', async (req, res) => {
 
     // Update password
     user.password = newPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
 
     try {
       await user.save();

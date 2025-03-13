@@ -6,6 +6,9 @@ services:
     staticPublishPath: ./client/dist
     routes:
       - type: rewrite
+        source: /api/*
+        destination: https://jay-kirana.onrender.com/api/:splat
+      - type: rewrite
         source: /reset-password/*
         destination: /index.html
       - type: rewrite
