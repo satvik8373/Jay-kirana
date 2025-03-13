@@ -24,7 +24,7 @@ function ForgotPassword() {
       const trimmedEmail = email.trim().toLowerCase();
       console.log('Sending request with trimmed email:', trimmedEmail);
       
-      const response = await axios.post(`${config.apiUrl}/auth/forgot-password`, 
+      const response = await axios.post(`${config.apiUrl}/user/forgot-password`, 
         { 
           email: trimmedEmail,
           clientUrl: 'https://jay-kirana.onrender.com/reset-password'
@@ -42,7 +42,7 @@ function ForgotPassword() {
       console.log('Password reset response:', response.data);
 
       if (response.status === 200) {
-        setSuccess('Password reset instructions have been sent to your email.');
+        setSuccess('Password reset instructions have been sent to your email. Please check your inbox.');
         setTimeout(() => {
           navigate('/login');
         }, 3000);
@@ -54,7 +54,8 @@ function ForgotPassword() {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        email: email.trim().toLowerCase()
+        email: email.trim().toLowerCase(),
+        endpoint: `${config.apiUrl}/user/forgot-password`
       });
       
       if (err.response?.status === 404) {
