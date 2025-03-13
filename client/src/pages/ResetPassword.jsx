@@ -64,32 +64,55 @@ function ResetPassword() {
       console.log('Attempting password reset with token:', token);
       const apiEndpoint = `${config.apiUrl}/user/reset-password`;
       console.log('Reset password API endpoint:', apiEndpoint);
+      console.log('Request payload:', {
+        token,
+        passwordLength: password.length
+      });
       
-      const response = await axios.post(apiEndpoint, 
+      const response = await axios.post(
+        apiEndpoint, 
         { 
           newPassword: password,
           token: token
         },
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          timeout: 10000
+          timeout: 10000,
+          validateStatus: function (status) {
+            return status >= 200 && status < 500; // Don't reject if status is 400-499
+          }
         }
       );
 
-      console.log('Reset password response:', response.data);
+      console.log('Reset password response:', {
+        status: response.status,
+        data: response.data
+      });
 
-      setSuccess('Password reset successful! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+      if (response.status === 200) {
+        setSuccess('Password reset successful! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      } else {
+        throw new Error(response.data.error || 'Failed to reset password');
+      }
     } catch (err) {
       console.error('Reset password error:', {
         message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        url: err.config?.url
+        response: {
+          status: err.response?.status,
+          data: err.response?.data,
+          headers: err.response?.headers
+        },
+        request: {
+          url: err.config?.url,
+          method: err.config?.method,
+          headers: err.config?.headers
+        }
       });
 
       if (err.response?.status === 400) {
@@ -103,7 +126,7 @@ function ResetPassword() {
       } else if (err.code === 'ECONNABORTED') {
         setError('Request timed out. Please try again.');
       } else {
-        setError('Failed to reset password. Please request a new reset link.');
+        setError(err.message || 'Failed to reset password. Please request a new reset link.');
       }
     } finally {
       setIsLoading(false);

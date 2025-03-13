@@ -808,13 +808,30 @@ router.post('/user/forgot-password', async (req, res) => {
 
 // Reset Password Route
 router.post('/user/reset-password', async (req, res) => {
-  console.log('Received reset password request:', req.body);
+  console.log('Received reset password request:', {
+    body: req.body,
+    headers: req.headers,
+    method: req.method
+  });
+  
   try {
     const { token, newPassword } = req.body;
 
+    console.log('Parsed request data:', {
+      hasToken: !!token,
+      hasPassword: !!newPassword,
+      tokenLength: token?.length
+    });
+
     if (!token || !newPassword) {
       console.log('Missing required fields:', { token: !!token, newPassword: !!newPassword });
-      return res.status(400).json({ error: 'Token and new password are required' });
+      return res.status(400).json({ 
+        error: 'Token and new password are required',
+        details: {
+          hasToken: !!token,
+          hasPassword: !!newPassword
+        }
+      });
     }
 
     // Find user with valid reset token
@@ -823,11 +840,18 @@ router.post('/user/reset-password', async (req, res) => {
       resetTokenExpiry: { $gt: Date.now() }
     });
 
-    console.log('User found:', user ? 'Yes' : 'No');
+    console.log('User search result:', {
+      found: !!user,
+      tokenExpired: user ? user.resetTokenExpiry < Date.now() : null,
+      tokenMatch: user ? user.resetToken === token : null
+    });
 
     if (!user) {
       console.log('Invalid or expired reset token');
-      return res.status(400).json({ error: 'Invalid or expired reset token' });
+      return res.status(400).json({ 
+        error: 'Invalid or expired reset token',
+        details: 'No user found with the provided token or token has expired'
+      });
     }
 
     // Update password
@@ -838,17 +862,32 @@ router.post('/user/reset-password', async (req, res) => {
     try {
       await user.save();
       console.log('Password reset successful for user:', user.email);
-      res.json({ message: 'Password reset successful' });
+      res.json({ 
+        message: 'Password reset successful',
+        email: user.email
+      });
     } catch (saveError) {
-      console.error('Error saving new password:', saveError);
-      res.status(500).json({ error: 'Failed to save new password' });
+      console.error('Error saving new password:', {
+        error: saveError.message,
+        code: saveError.code,
+        name: saveError.name
+      });
+      res.status(500).json({ 
+        error: 'Failed to save new password',
+        details: saveError.message
+      });
     }
   } catch (error) {
     console.error('Reset password error:', {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
+      name: error.name,
+      code: error.code
     });
-    res.status(500).json({ error: 'Failed to reset password' });
+    res.status(500).json({ 
+      error: 'Failed to reset password',
+      details: error.message
+    });
   }
 });
 
