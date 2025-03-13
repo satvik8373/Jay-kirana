@@ -16,20 +16,20 @@ import Users from './components/admin/Users';
 import './index.css';
 
 function ProtectedRoute({ children, requireAdmin }) {
-  const { isAuthenticated, isAdmin, user } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const location = useLocation();
   
-  useEffect(() => {
-    // Store the last accessed route for redirection after login
-    if (!isAuthenticated) {
-      sessionStorage.setItem('lastRoute', location.pathname);
-    }
-  }, [location, isAuthenticated]);
+  // Show nothing while checking authentication
+  if (loading) {
+    return null;
+  }
   
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
+  // Redirect to home if admin access is required but user is not admin
   if (requireAdmin && !isAdmin) {
     return <Navigate to="/" replace />;
   }
@@ -57,30 +57,29 @@ function App() {
 
   const addToCart = (product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.productId === product._id);
+      const existingItem = prevCart.find(item => item._id === product._id);
       if (existingItem) {
         return prevCart.map(item =>
-          item.productId === product._id
+          item._id === product._id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevCart, { ...product, productId: product._id, quantity: 1 }];
+      return [...prevCart, { ...product, quantity: 1 }];
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
+    setCart(prevCart => prevCart.filter(item => item._id !== productId));
   };
 
-  const updateQuantity = (productId, quantity) => {
-    if (quantity < 1) {
-      removeFromCart(productId);
-      return;
-    }
+  const updateQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
     setCart(prevCart =>
       prevCart.map(item =>
-        item.productId === productId ? { ...item, quantity } : item
+        item._id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
   };
@@ -103,11 +102,15 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
+              
+              {/* Admin routes */}
               <Route path="/admin/*" element={
                 <ProtectedRoute requireAdmin={true}>
                   <Admin />
                 </ProtectedRoute>
               } />
+              
+              {/* Protected routes */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
@@ -137,7 +140,11 @@ function App() {
                   <Users />
                 </ProtectedRoute>
               } />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              
+              {/* Catch all route */}
+              <Route path="*" element={
+                <Navigate to="/" replace />
+              } />
             </Routes>
           </main>
           <Footer />

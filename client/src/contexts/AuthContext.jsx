@@ -22,25 +22,34 @@ export function AuthProvider({ children }) {
           // Set token in axios defaults
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
           
+          // First try to get the profile
           const response = await axios.get(`${config.apiUrl}/user/profile`);
           const userData = response.data;
           
+          // Update state with user data
           setUser(userData);
           setToken(storedToken);
-          setIsAdmin(userData.role === 'admin');
+          
+          // Check admin status
+          const isAdminUser = userData.role === 'admin' || userData.email === process.env.ADMIN_EMAIL;
+          setIsAdmin(isAdminUser);
           
           console.log('Auth initialized:', { 
             user: userData,
-            isAdmin: userData.role === 'admin'
+            isAdmin: isAdminUser,
+            token: 'present'
           });
         } catch (error) {
           console.error('Auth initialization error:', error);
+          // Clear everything on error
           localStorage.removeItem('token');
           delete axios.defaults.headers.common['Authorization'];
           setToken(null);
           setUser(null);
           setIsAdmin(false);
         }
+      } else {
+        console.log('No stored token found');
       }
       setLoading(false);
     };
@@ -65,11 +74,15 @@ export function AuthProvider({ children }) {
     // Update state
     setToken(token);
     setUser(user);
-    setIsAdmin(user.role === 'admin');
+    
+    // Check admin status
+    const isAdminUser = user.role === 'admin' || user.email === process.env.ADMIN_EMAIL;
+    setIsAdmin(isAdminUser);
 
     console.log('Login successful:', {
       user,
-      isAdmin: user.role === 'admin'
+      isAdmin: isAdminUser,
+      token: 'present'
     });
   };
 
@@ -88,6 +101,7 @@ export function AuthProvider({ children }) {
     logout,
     isAuthenticated: !!token,
     isAdmin,
+    loading
   };
 
   return (

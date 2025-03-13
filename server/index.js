@@ -31,23 +31,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Initialize server
-const startServer = async () => {
-  try {
-    // Connect to MongoDB first
-    await connectDB();
-    
-    // Start server only after successful DB connection
-    app.listen(config.port, () => {
-      console.log(`Server running in ${config.env} mode on port ${config.port}`);
-      console.log(`API URL: ${config.getApiUrl()}`);
-      console.log(`Client URL: ${config.clientUrl}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
+// Connect to MongoDB
+connectDB();
 
-// Start the server
-startServer(); 
+// Start server
+app.listen(config.port, () => {
+  console.log(`Server running in ${config.env} mode on port ${config.port}`);
+  console.log(`API URL: ${config.getApiUrl()}`);
+  console.log(`Client URL: ${config.clientUrl}`);
+}); 

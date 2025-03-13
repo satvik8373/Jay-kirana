@@ -38,13 +38,7 @@ function Header({ cartItemCount = 0 }) {
           {isAuthenticated ? (
             <div className="user-info">
               <span>Welcome, {user?.name || 'User'}</span>
-              {isAdmin && (
-                <>
-                  <span className="admin-badge">Admin</span>
-                  <Link to="/admin" className="admin-link-top">Dashboard</Link>
-                </>
-              )}
-              <button onClick={handleLogout} className="logout-btn">Logout</button>
+              {isAdmin && <span className="admin-badge">Admin</span>}
             </div>
           ) : (
             <Link to="/login" className="top-login-link">Sign In / Register</Link>
@@ -147,7 +141,7 @@ function Header({ cartItemCount = 0 }) {
           .user-info {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: var(--spacing-sm);
           }
 
           .admin-badge {
@@ -375,32 +369,26 @@ function Header({ cartItemCount = 0 }) {
             transform: translateX(-50%) translateY(5px);
           }
 
-          .admin-link-top {
-            color: white;
-            text-decoration: none;
-            margin-left: 1rem;
-            padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            transition: all 0.3s ease;
-          }
-
-          .admin-link-top:hover {
-            background: rgba(255, 255, 255, 0.2);
-          }
-
           .logout-btn {
-            background: none;
-            border: none;
+            background: var(--primary-color);
             color: white;
+            border: none;
+            height: 36px;
+            padding: 0 var(--spacing-lg);
+            border-radius: 18px;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
+            font-weight: 500;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 0.95rem;
           }
 
           .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
           }
 
           .admin-link {
