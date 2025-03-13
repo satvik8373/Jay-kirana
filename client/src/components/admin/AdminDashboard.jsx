@@ -40,12 +40,11 @@ function AdminDashboard() {
 
       <div className="admin-content">
         <Routes>
-          <Route path="/" element={<Navigate to="orders" replace />} />
           <Route path="add-product" element={<AddProduct />} />
           <Route path="manage-products" element={<ManageProducts />} />
           <Route path="orders" element={<Orders />} />
           <Route path="users" element={<Users />} />
-          <Route path="*" element={<Navigate to="orders" replace />} />
+          <Route path="" element={<Navigate to="orders" replace />} />
         </Routes>
       </div>
 
@@ -67,7 +66,6 @@ function AdminDashboard() {
           top: 60px;
           bottom: 0;
           box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          z-index: 100;
         }
 
         .nav-links {
@@ -120,7 +118,6 @@ function AdminDashboard() {
           margin-left: 250px;
           padding: 20px;
           background: #f5f5f5;
-          min-height: calc(100vh - 60px);
         }
 
         @media (max-width: 768px) {
@@ -156,7 +153,6 @@ function AdminDashboard() {
             right: 20px;
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 101;
           }
         }
       `}</style>
