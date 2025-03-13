@@ -367,7 +367,7 @@ function AddProduct() {
         }
 
         h2 {
-          color:rgb(255, 255, 255);
+          color: #1a237e;
           margin-bottom: 1.5rem;
           font-size: 1.5rem;
         }
