@@ -2,22 +2,37 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { FaFilter } from 'react-icons/fa';
 
-function ProductList({ products, addToCart }) {
+function ProductList({ products = [], addToCart }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
+    if (!Array.isArray(products)) {
+      console.error('Products is not an array:', products);
+      setFilteredProducts([]);
+      return;
+    }
+
     if (selectedCategory === 'all') {
       setFilteredProducts(products);
     } else {
       setFilteredProducts(products.filter(product => 
-        product.category.toLowerCase() === selectedCategory.toLowerCase()
+        product?.category?.toLowerCase() === selectedCategory.toLowerCase()
       ));
     }
   }, [selectedCategory, products]);
 
-  const categories = ['all', ...new Set(products.map(product => product.category.toLowerCase()))];
+  // Safely extract unique categories
+  const categories = ['all', ...new Set(
+    products
+      ?.filter(product => product?.category)
+      ?.map(product => product.category.toLowerCase()) || []
+  )];
+
+  if (!Array.isArray(products)) {
+    return <div className="loading">Loading products...</div>;
+  }
 
   return (
     <div className="product-list-container">
@@ -39,23 +54,24 @@ function ProductList({ products, addToCart }) {
                 setIsFilterOpen(false);
               }}
             >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
+              {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
       <div className="products-grid">
-        {filteredProducts.map(product => (
-          <ProductCard
-            key={product._id}
-            product={product}
-            addToCart={addToCart}
-          />
-        ))}
-        {filteredProducts.length === 0 && (
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map(product => (
+            <ProductCard
+              key={product?._id || Math.random()}
+              product={product}
+              addToCart={addToCart}
+            />
+          ))
+        ) : (
           <div className="no-products">
-            <p>No products found in this category</p>
+            <p>{selectedCategory === 'all' ? 'No products available' : 'No products found in this category'}</p>
           </div>
         )}
       </div>
@@ -65,6 +81,13 @@ function ProductList({ products, addToCart }) {
           padding: 20px;
           max-width: 1400px;
           margin: 0 auto;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 40px;
+          font-size: 1.2rem;
+          color: #666;
         }
 
         .filters-container {

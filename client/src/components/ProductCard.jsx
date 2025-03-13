@@ -2,7 +2,7 @@ import React from 'react';
 import { FaShoppingCart, FaLeaf, FaFireAlt, FaCookie, FaWineBottle } from 'react-icons/fa';
 import { GiMedicines } from 'react-icons/gi';
 
-function ProductCard({ product, addToCart }) {
+function ProductCard({ product = {}, addToCart }) {
   // Default category images and colors
   const categoryConfig = {
     groceries: {
@@ -44,11 +44,13 @@ function ProductCard({ product, addToCart }) {
     image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=400&auto=format'
   };
 
-  const category = product.category.toLowerCase();
+  const category = (product.category || '').toLowerCase();
   const config = categoryConfig[category] || defaultConfig;
   const Icon = config.icon;
 
   const handleAddToCart = (e) => {
+    if (!product || !addToCart) return;
+
     const productCard = e.currentTarget.closest('.product-card');
     const productImage = productCard.querySelector('.product-image');
     const cartIcon = document.querySelector('.nav-icons .icon-wrapper:first-child');
@@ -105,12 +107,16 @@ function ProductCard({ product, addToCart }) {
     addToCart(product);
   };
 
+  if (!product) {
+    return null;
+  }
+
   return (
     <div className="product-card">
       <div className="product-image-container">
         <img 
           src={product.image || config.image}
-          alt={product.name}
+          alt={product.name || 'Product Image'}
           className="product-image"
           onError={(e) => {
             e.target.src = config.image;
@@ -118,20 +124,20 @@ function ProductCard({ product, addToCart }) {
         />
         <div className="category-badge" style={{ background: config.gradient }}>
           <Icon className="category-icon" />
-          <span>{product.category}</span>
+          <span>{product.category || 'Uncategorized'}</span>
         </div>
       </div>
       
       <div className="product-info">
-        <h3>{product.name}</h3>
+        <h3>{product.name || 'Unnamed Product'}</h3>
         <div className="price-stock">
-          <span className="price">₹{product.price}</span>
-          <span className={`stock ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-            {product.stock > 0 ? `${product.stock} in stock` : 'Out of Stock'}
+          <span className="price">₹{product.price || 0}</span>
+          <span className={`stock ${(product.stock || 0) > 0 ? 'in-stock' : 'out-of-stock'}`}>
+            {(product.stock || 0) > 0 ? `${product.stock} in stock` : 'Out of Stock'}
           </span>
         </div>
         
-        {product.stock > 0 ? (
+        {(product.stock || 0) > 0 ? (
           <button 
             onClick={handleAddToCart}
             className="add-to-cart-btn"
