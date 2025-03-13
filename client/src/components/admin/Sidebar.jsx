@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaBox, FaPlus, FaShoppingCart, FaEnvelope, FaUsers } from 'react-icons/fa';
+import { FaBox, FaPlus, FaShoppingCart, FaEnvelope } from 'react-icons/fa';
 
 function Sidebar({ activeSection, setActiveSection }) {
   const menuItems = [

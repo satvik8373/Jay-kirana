@@ -18,12 +18,7 @@ function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${config.apiUrl}/admin/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${config.apiUrl}/users`);
       console.log('Users data:', response.data);
       setUsers(response.data);
       setError(null);
