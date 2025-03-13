@@ -807,10 +807,15 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Reset Password Route
-router.post('/reset-password', async (req, res) => {
-  console.log('Received reset password request:', req.body);
+router.post('/reset-password/:token', async (req, res) => {
+  console.log('Received reset password request:', {
+    params: req.params,
+    body: req.body
+  });
+  
   try {
-    const { token, newPassword } = req.body;
+    const { token } = req.params;
+    const { newPassword } = req.body;
 
     if (!token || !newPassword) {
       console.log('Missing required fields:', { token: !!token, newPassword: !!newPassword });
