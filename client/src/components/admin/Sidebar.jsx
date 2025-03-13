@@ -1,32 +1,28 @@
 import React from 'react';
-import { FaBox, FaPlus, FaShoppingCart, FaEnvelope } from 'react-icons/fa';
+import { NavLink } from 'react-router-dom';
+import { FaBox, FaShoppingBag, FaUsers, FaSignOutAlt, FaPlus } from 'react-icons/fa';
 
 function Sidebar({ activeSection, setActiveSection }) {
   const menuItems = [
     {
-      id: 'orders',
-      label: 'Orders',
-      icon: FaShoppingCart
+      title: 'Add Product',
+      icon: <FaPlus />,
+      path: 'add-product'
     },
     {
-      id: 'add-product',
-      label: 'Add Product',
-      icon: FaPlus
+      title: 'Manage Products',
+      icon: <FaBox />,
+      path: 'manage-products'
     },
     {
-      id: 'manage-products',
-      label: 'Manage Products',
-      icon: FaBox
+      title: 'Orders',
+      icon: <FaShoppingBag />,
+      path: 'orders'
     },
     {
-      id: 'email-marketing',
-      label: 'Email Marketing',
-      icon: FaEnvelope
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: FaUsers
+      title: 'Users',
+      icon: <FaUsers />,
+      path: 'users'
     }
   ];
 
@@ -37,28 +33,27 @@ function Sidebar({ activeSection, setActiveSection }) {
       </div>
       <nav>
         {menuItems.map((item) => (
-          <button
-            key={item.id}
-            className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
-            onClick={() => setActiveSection(item.id)}
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
           >
-            {item.icon && <item.icon />} {item.label}
-          </button>
+            {item.icon}
+            <span>{item.title}</span>
+          </NavLink>
         ))}
       </nav>
 
       <style jsx>{`
         .sidebar {
-          position: fixed;
-          top: 0;
-          left: 0;
           width: 250px;
-          height: 100vh;
-          background-color: #1a237e;
-          color: white;
+          background: white;
           padding: 20px;
+          height: 100%;
+          position: fixed;
+          left: 0;
+          top: 60px;
           box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
         }
 
         .logo {
@@ -83,33 +78,29 @@ function Sidebar({ activeSection, setActiveSection }) {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 12px 20px;
-          border: none;
-          background: none;
-          color: white;
-          font-size: 1rem;
-          cursor: pointer;
+          padding: 12px 15px;
+          color: #666;
+          text-decoration: none;
           border-radius: 8px;
           transition: all 0.3s ease;
-          width: 100%;
-          text-align: left;
         }
 
         .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
+          background: #f0f0f0;
+          color: #1a237e;
         }
 
         .nav-item.active {
-          background-color: rgba(255, 255, 255, 0.2);
-          font-weight: 600;
+          background: #1a237e;
+          color: white;
         }
 
         @media (max-width: 768px) {
           .sidebar {
-            top: auto;
-            bottom: 0;
             width: 100%;
             height: auto;
+            position: relative;
+            top: 0;
             padding: 10px;
           }
 
@@ -119,19 +110,12 @@ function Sidebar({ activeSection, setActiveSection }) {
 
           nav {
             flex-direction: row;
-            justify-content: space-around;
+            overflow-x: auto;
+            padding-bottom: 10px;
           }
 
           .nav-item {
-            flex-direction: column;
-            padding: 8px;
-            font-size: 0.8rem;
-            gap: 5px;
-            text-align: center;
-          }
-
-          .nav-item svg {
-            font-size: 1.2rem;
+            white-space: nowrap;
           }
         }
       `}</style>
