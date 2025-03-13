@@ -13,13 +13,19 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [lastLocation, setLastLocation] = useState(null);
 
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('token');
+      const storedLocation = sessionStorage.getItem('lastLocation');
+      
+      if (storedLocation) {
+        setLastLocation(storedLocation);
+      }
+      
       if (storedToken) {
         try {
-          // Set token in axios defaults
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
           
           const response = await axios.get(`${config.apiUrl}/user/profile`);
@@ -31,15 +37,18 @@ export function AuthProvider({ children }) {
           
           console.log('Auth initialized:', { 
             user: userData,
-            isAdmin: userData.role === 'admin'
+            isAdmin: userData.role === 'admin',
+            lastLocation: storedLocation
           });
         } catch (error) {
           console.error('Auth initialization error:', error);
           localStorage.removeItem('token');
+          sessionStorage.removeItem('lastLocation');
           delete axios.defaults.headers.common['Authorization'];
           setToken(null);
           setUser(null);
           setIsAdmin(false);
+          setLastLocation(null);
         }
       }
       setLoading(false);
@@ -58,27 +67,41 @@ export function AuthProvider({ children }) {
       throw new Error('Invalid login response format');
     }
 
-    // Store token and update axios defaults
     localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    // Update state
     setToken(token);
     setUser(user);
     setIsAdmin(user.role === 'admin');
 
+    // Restore last location if available
+    const storedLocation = sessionStorage.getItem('lastLocation');
+    if (storedLocation) {
+      setLastLocation(storedLocation);
+    }
+
     console.log('Login successful:', {
       user,
-      isAdmin: user.role === 'admin'
+      isAdmin: user.role === 'admin',
+      lastLocation: storedLocation
     });
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    sessionStorage.removeItem('lastLocation');
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
     setIsAdmin(false);
+    setLastLocation(null);
+  };
+
+  const saveLocation = (location) => {
+    if (location && location !== '/login') {
+      sessionStorage.setItem('lastLocation', location);
+      setLastLocation(location);
+    }
   };
 
   const value = {
@@ -88,6 +111,8 @@ export function AuthProvider({ children }) {
     logout,
     isAuthenticated: !!token,
     isAdmin,
+    lastLocation,
+    saveLocation
   };
 
   return (

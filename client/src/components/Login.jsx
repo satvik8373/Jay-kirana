@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import config from '../config';
@@ -13,6 +13,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +47,16 @@ function Login() {
       }
 
       await login(response.data);
-      navigate('/');
+      
+      // Handle redirection after successful login
+      const from = location.state?.from?.pathname || '/';
+      const isAdmin = response.data.user.role === 'admin';
+      
+      if (isAdmin && from === '/') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       console.error('Auth error:', err);
       
