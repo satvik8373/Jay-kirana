@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -44,7 +43,6 @@ export function AuthProvider({ children }) {
         }
       }
       setLoading(false);
-      setInitialized(true);
     };
 
     initAuth();
@@ -90,13 +88,11 @@ export function AuthProvider({ children }) {
     logout,
     isAuthenticated: !!token,
     isAdmin,
-    loading,
-    initialized
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {initialized && children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

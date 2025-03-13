@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import MobileHeader from './components/MobileHeader';
 import Footer from './components/Footer';
@@ -16,19 +16,22 @@ import Users from './components/admin/Users';
 import './index.css';
 
 function ProtectedRoute({ children, requireAdmin }) {
-  const { isAuthenticated, isAdmin, loading, initialized } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
+  const location = useLocation();
   
-  // Show nothing while auth is initializing
-  if (!initialized) {
-    return null;
-  }
+  useEffect(() => {
+    // Store the last accessed route for redirection after login
+    if (!isAuthenticated) {
+      sessionStorage.setItem('lastRoute', location.pathname);
+    }
+  }, [location, isAuthenticated]);
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
   
   return children;

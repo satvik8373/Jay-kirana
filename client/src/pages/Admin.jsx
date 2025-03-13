@@ -1,36 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import Sidebar from '../components/admin/Sidebar';
 import Orders from '../components/admin/Orders';
 import AddProduct from '../components/admin/AddProduct';
 import ManageProducts from '../components/admin/ManageProducts';
 import Users from '../components/admin/Users';
 import EmailMarketing from '../components/admin/EmailMarketing';
-import { useAuth } from '../contexts/AuthContext';
 
 function Admin() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isAdmin } = useAuth();
-  const [activeSection, setActiveSection] = useState(() => {
-    // Get section from URL or default to manage-products
-    const path = location.pathname.split('/').pop();
-    return ['orders', 'add-product', 'manage-products', 'users', 'email-marketing'].includes(path)
-      ? path
-      : 'manage-products';
-  });
-
-  useEffect(() => {
-    // Update URL when section changes
-    navigate(`/admin/${activeSection}`, { replace: true });
-  }, [activeSection, navigate]);
-
-  useEffect(() => {
-    // Ensure user is admin
-    if (!isAdmin) {
-      navigate('/', { replace: true });
-    }
-  }, [isAdmin, navigate]);
+  const [activeSection, setActiveSection] = useState('manage-products');
 
   const renderContent = () => {
     switch (activeSection) {
@@ -48,10 +25,6 @@ function Admin() {
         return <ManageProducts />;
     }
   };
-
-  if (!isAdmin) {
-    return null;
-  }
 
   return (
     <div className="admin-layout">

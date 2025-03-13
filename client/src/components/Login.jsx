@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import config from '../config';
@@ -13,6 +13,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +47,17 @@ function Login() {
       }
 
       await login(response.data);
-      navigate('/');
+      
+      // Get the redirect path from location state or session storage
+      const from = location.state?.from?.pathname || sessionStorage.getItem('lastRoute') || '/';
+      sessionStorage.removeItem('lastRoute'); // Clear the stored route
+      
+      // If user is admin and trying to access admin page, allow it
+      if (response.data.user.role === 'admin' && from.startsWith('/admin')) {
+        navigate(from);
+      } else {
+        navigate(response.data.user.role === 'admin' ? '/admin' : '/');
+      }
     } catch (err) {
       console.error('Auth error:', err);
       
@@ -93,40 +104,27 @@ function Login() {
               required
             />
             <label>Enter your password</label>
-            <button 
-              type="button" 
-              className="password-toggle"
+            <button
+              type="button"
+              className="toggle-password"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              )}
+              {showPassword ? 'Hide' : 'Show'}
             </button>
           </div>
 
-          {!isSignup && (
-            <div className="forget">
-              <label htmlFor="remember">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={form.remember}
-                  onChange={(e) => setForm({ ...form, remember: e.target.checked })}
-                />
-                <p>Remember me</p>
-              </label>
-              <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>Forgot password?</a>
-            </div>
-          )}
-
+          <div className="remember-forgot">
+            <label>
+              <input
+                type="checkbox"
+                checked={form.remember}
+                onChange={(e) => setForm({ ...form, remember: e.target.checked })}
+              />
+              Remember me
+            </label>
+            <a href="/forgot-password">Forgot password?</a>
+          </div>
+          
           <button 
             type="submit"
             disabled={isLoading}
@@ -240,20 +238,20 @@ function Login() {
           color: #666666;
         }
 
-        .forget {
+        .remember-forgot {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin: 15px 0 35px;
         }
 
-        .forget label {
+        .remember-forgot label {
           display: flex;
           align-items: center;
           color: #666666;
         }
 
-        .forget label input {
+        .remember-forgot label input {
           margin-right: 5px;
           accent-color: #1976d2;
         }
@@ -341,7 +339,7 @@ function Login() {
           font-size: 14px;
         }
 
-        .password-toggle {
+        .toggle-password {
           position: absolute;
           right: 5px;
           top: 50%;
@@ -355,13 +353,13 @@ function Login() {
           justify-content: center;
         }
 
-        .password-toggle svg {
+        .toggle-password svg {
           width: 20px;
           height: 20px;
           color: #666666;
         }
 
-        .password-toggle:hover svg {
+        .toggle-password:hover svg {
           color: #1976d2;
         }
       `}</style>

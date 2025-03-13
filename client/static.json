@@ -1,18 +1,15 @@
 {
-  "root": "build/",
-  "clean_urls": false,
+  "root": "dist",
+  "clean_urls": true,
   "routes": {
-    "/reset-password/*": "index.html",
     "/**": "index.html"
   },
+  "https_only": true,
   "headers": {
     "/**": {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-      "X-Frame-Options": "DENY",
-      "X-Content-Type-Options": "nosniff"
+      "Strict-Transport-Security": "max-age=31557600",
+      "Cache-Control": "no-store, no-cache",
+      "X-Frame-Options": "DENY"
     }
-  },
-  "https_only": true,
-  "error_page": "index.html"
+  }
 } 

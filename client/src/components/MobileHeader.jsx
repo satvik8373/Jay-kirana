@@ -85,7 +85,15 @@ function MobileHeader({ cartItemCount = 0 }) {
             <FaUser className="user-icon" />
             <div className="user-details">
               <span className="user-name">{user?.name || 'User'}</span>
-              {isAdmin && <span className="admin-badge">Admin</span>}
+              {isAdmin && (
+                <>
+                  <span className="admin-badge">Admin</span>
+                  <Link to="/admin" className="admin-link">
+                    Admin Dashboard
+                    <span className="admin-indicator"></span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
