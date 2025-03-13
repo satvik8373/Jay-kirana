@@ -121,9 +121,19 @@ router.post('/register', async (req, res) => {
 });
 
 // User Login (public)
-router.post('/login', async (req, res) => {
+router.post('/user/login', async (req, res) => {
   try {
     console.log('Login attempt:', { email: req.body.email });
+    console.log('MongoDB connection state:', mongoose.connection.readyState);
+    
+    // Check MongoDB connection first
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected. Current state:', mongoose.connection.readyState);
+      return res.status(503).json({ 
+        error: 'Database connection not ready',
+        details: 'Please try again in a few moments'
+      });
+    }
     
     const { email, password } = req.body;
     
@@ -174,8 +184,23 @@ router.post('/login', async (req, res) => {
       user: userResponse
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Login error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    
+    if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+      return res.status(503).json({ 
+        error: 'Database error',
+        details: 'Please try again in a few moments'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
