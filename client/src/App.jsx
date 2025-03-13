@@ -6,7 +6,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Login from './components/Login';
-import ForgotPassword from './components/ForgotPassword';
+import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Cart from './components/Cart';
 import Checkout from './components/Checkout';
