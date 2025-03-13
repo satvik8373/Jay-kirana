@@ -13,7 +13,6 @@ import Checkout from './components/Checkout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Profile from './components/Profile';
 import './index.css';
-import AdminDashboard from './components/admin/AdminDashboard';
 
 function ProtectedRoute({ children, requireAdmin }) {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -36,7 +35,6 @@ function App() {
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
-  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -82,14 +80,6 @@ function App() {
     setCart([]);
   };
 
-  const PrivateRoute = ({ children }) => {
-    return isAuthenticated ? children : <Navigate to="/login" />;
-  };
-
-  const AdminRoute = ({ children }) => {
-    return isAuthenticated && user?.role === 'admin' ? children : <Navigate to="/" />;
-  };
-
   return (
     <AuthProvider>
       <Router>
@@ -105,33 +95,33 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/admin/*" element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
+                <ProtectedRoute requireAdmin={true}>
+                  <Admin />
+                </ProtectedRoute>
               } />
               <Route path="/profile" element={
-                <PrivateRoute>
+                <ProtectedRoute>
                   <Profile />
-                </PrivateRoute>
+                </ProtectedRoute>
               } />
               <Route path="/" element={
-                <PrivateRoute>
+                <ProtectedRoute>
                   <Home addToCart={addToCart} />
-                </PrivateRoute>
+                </ProtectedRoute>
               } />
               <Route path="/cart" element={
-                <PrivateRoute>
+                <ProtectedRoute>
                   <Cart 
                     cart={cart}
                     removeFromCart={removeFromCart}
                     updateQuantity={updateQuantity}
                   />
-                </PrivateRoute>
+                </ProtectedRoute>
               } />
               <Route path="/checkout" element={
-                <PrivateRoute>
+                <ProtectedRoute>
                   <Checkout cart={cart} onCheckout={clearCart} />
-                </PrivateRoute>
+                </ProtectedRoute>
               } />
               <Route path="*" element={
                 <Navigate to="/" replace />
