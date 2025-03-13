@@ -13,6 +13,19 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Jay Kirana</title>
+    <script>
+      // Handle direct navigation
+      (function() {
+        var path = window.location.pathname;
+        var search = window.location.search;
+        if (search.includes('path=')) {
+          var newPath = new URLSearchParams(search).get('path');
+          if (newPath) {
+            window.history.replaceState(null, '', newPath);
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -1,9 +1,15 @@
 {
   "root": "build/",
-  "clean_urls": false,
+  "clean_urls": true,
   "routes": {
-    "/reset-password/*": "index.html",
-    "/**": "index.html"
+    "/reset-password/*": {
+      "file": "index.html",
+      "status": 200
+    },
+    "/**": {
+      "file": "index.html",
+      "status": 200
+    }
   },
   "headers": {
     "/**": {
