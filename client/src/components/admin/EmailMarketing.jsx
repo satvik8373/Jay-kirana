@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import config from '../../config';
+import config from './config';
 import { FaEnvelope, FaUsers, FaTags, FaSpinner, FaCheck, FaTimes, FaImage, FaFont, FaPalette, FaAlignLeft } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 

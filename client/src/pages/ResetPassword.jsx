@@ -15,10 +15,30 @@ function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Debug logging for route and token
+    console.log('ResetPassword component mounted');
+    console.log('Current URL:', window.location.href);
+    console.log('Token from params:', token);
+
+    // Validate token presence
     if (!token) {
-      setError('Invalid reset token');
-      setTimeout(() => navigate('/'), 3000);
+      console.error('No reset token provided');
+      setError('Invalid or missing reset token');
+      setTimeout(() => navigate('/login'), 3000);
+      return;
     }
+
+    // Verify token format
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      console.error('Invalid token format:', token);
+      setError('Invalid reset token format');
+      setTimeout(() => navigate('/login'), 3000);
+      return;
+    }
+
+    // Log the token for debugging
+    console.log('Reset token received:', token);
+    console.log('Current API URL:', config.apiUrl);
   }, [token, navigate]);
 
   const handleSubmit = async (e) => {
@@ -41,30 +61,49 @@ function ResetPassword() {
     }
 
     try {
-      console.log('Sending reset password request with token:', token);
-      const response = await axios.post(`${config.apiUrl}/reset-password`, {
-        token,
-        newPassword: password
+      console.log('Attempting password reset with token:', token);
+      const apiEndpoint = `${config.apiUrl}/user/reset-password`;
+      console.log('Reset password API endpoint:', apiEndpoint);
+      
+      const response = await axios.post(apiEndpoint, 
+        { 
+          newPassword: password,
+          token: token
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        }
+      );
+
+      console.log('Reset password response:', response.data);
+
+      setSuccess('Password reset successful! Redirecting to login...');
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err) {
+      console.error('Reset password error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
       });
 
-      console.log('Reset password response:', response);
-
-      if (response.status === 200) {
-        setSuccess('Password reset successful. Redirecting to login...');
-        setTimeout(() => {
-          navigate('/');
-        }, 3000);
-      }
-    } catch (err) {
-      console.error('Reset password error:', err);
       if (err.response?.status === 400) {
         setError(err.response.data.error || 'Invalid or expired reset token');
+      } else if (err.response?.status === 404) {
+        setError('Reset token not found or has expired. Please request a new reset link.');
       } else if (err.response?.status === 500) {
         setError('Server error. Please try again later.');
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Network error. Please check if the server is running.');
+        setError('Network error. Please check your connection and try again.');
+      } else if (err.code === 'ECONNABORTED') {
+        setError('Request timed out. Please try again.');
       } else {
-        setError('Failed to reset password. Please try again.');
+        setError('Failed to reset password. Please request a new reset link.');
       }
     } finally {
       setIsLoading(false);

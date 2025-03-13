@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -16,22 +17,18 @@ function ForgotPassword() {
     setSuccess('');
 
     try {
-      console.log('Sending password reset request for email:', email);
-      const response = await axios.post('http://localhost:5000/api/forgot-password', // Changed port to 5000
-        { email },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true, // Added to handle CORS
-          timeout: 10000 // 10 second timeout
-        }
-      );
+      console.log('Sending password reset request for:', email);
+      const response = await axios.post(`${config.apiUrl}/user/forgot-password`, { email });
       
       console.log('Password reset response:', response.data);
       setSuccess('Password reset instructions have been sent to your email.');
+      
+      // Clear the form
+      setEmail('');
+      
+      // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate('/');
+        navigate('/login');
       }, 3000);
     } catch (err) {
       console.error('Password reset error:', {
@@ -39,17 +36,15 @@ function ForgotPassword() {
         response: err.response?.data,
         status: err.response?.status
       });
-      
+
       if (err.response?.status === 404) {
-        setError('No account found with this email address.');
-      } else if (err.response?.status === 400) {
-        setError(err.response.data.error || 'Please provide a valid email address.');
-      } else if (err.code === 'ECONNABORTED') {
-        setError('Request timed out. Please try again.');
-      } else if (err.response?.status === 500) {
-        setError('Server error occurred. Please try again later.');
+        setError('Email address not found.');
+      } else if (err.response?.status === 429) {
+        setError('Too many requests. Please try again later.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Network error. Please check your connection and try again.');
       } else {
-        setError(err.response?.data?.error || 'Failed to process password reset request. Please try again later.');
+        setError(err.response?.data?.error || 'Failed to process password reset request.');
       }
     } finally {
       setIsLoading(false);
@@ -71,13 +66,14 @@ function ForgotPassword() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
             <label>Enter your email</label>
           </div>
 
           <button 
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !email}
             className={isLoading ? 'loading' : ''}
           >
             {isLoading ? 'Please wait...' : 'Reset Password'}
@@ -86,7 +82,7 @@ function ForgotPassword() {
           <div className="register">
             <p>
               Remember your password?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>
                 Login
               </a>
             </p>
@@ -95,23 +91,6 @@ function ForgotPassword() {
       </div>
 
       <style jsx>{`
-        .success-message {
-          background-color: #4caf50;
-          color: white;
-          padding: 10px;
-          border-radius: 5px;
-          margin-bottom: 20px;
-        }
-
-        .error-message {
-          background-color: #f44336;
-          color: white;
-          padding: 10px;
-          border-radius: 5px;
-          margin-bottom: 20px;
-        }
-
-        /* Inheriting existing styles from Login component */
         @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@200;300;400;500;600;700&display=swap");
 
         .auth-page {
@@ -124,6 +103,18 @@ function ForgotPassword() {
           background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
           position: relative;
           overflow: hidden;
+        }
+
+        .auth-page::before {
+          content: "";
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+          backdrop-filter: blur(100px);
+          -webkit-backdrop-filter: blur(100px);
+          z-index: 0;
+          top: 0;
         }
 
         .wrapper {
@@ -140,10 +131,33 @@ function ForgotPassword() {
           margin: 20px auto;
         }
 
+        .wrapper:hover {
+          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+          background: rgba(255, 255, 255, 0.95);
+        }
+
+        h2 {
+          font-size: 2.2rem;
+          margin-bottom: 25px;
+          color: #333333;
+          letter-spacing: 1px;
+        }
+
         .input-field {
           position: relative;
           border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-          margin: 20px 0;
+          margin: 25px 0;
+        }
+
+        .input-field input {
+          width: 100%;
+          height: 45px;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-size: 16px;
+          color: #333333;
+          padding: 0 10px;
         }
 
         .input-field label {
@@ -157,23 +171,33 @@ function ForgotPassword() {
           transition: 0.3s ease;
         }
 
-        .input-field input {
-          width: 100%;
-          height: 40px;
-          background: transparent;
-          border: none;
-          outline: none;
-          font-size: 16px;  
-          color: #333333;
-          padding: 0 10px;
-        }
-
         .input-field input:focus ~ label,
         .input-field input:valid ~ label {
           font-size: 0.9rem;
           top: 10px;
           transform: translateY(-150%);
           color: #1976d2;
+          font-weight: 500;
+        }
+
+        .success-message {
+          background-color: #4caf50;
+          color: white;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          font-weight: 500;
+          box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+        }
+
+        .error-message {
+          background-color: #f44336;
+          color: white;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          font-weight: 500;
+          box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2);
         }
 
         button {
@@ -187,7 +211,8 @@ function ForgotPassword() {
           font-size: 16px;
           border: 2px solid transparent;
           transition: all 0.3s ease;
-          margin-top: 20px;
+          width: 100%;
+          margin-top: 30px;
         }
 
         button:hover:not(:disabled) {
@@ -199,24 +224,65 @@ function ForgotPassword() {
         button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+          background-color: #ccc;
+        }
+
+        .loading {
+          position: relative;
+          color: transparent !important;
+        }
+
+        .loading::after {
+          content: "";
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border: 2px solid #ffffff;
+          border-radius: 50%;
+          border-top-color: transparent;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
         }
 
         .register {
-          margin-top: 20px;
+          margin-top: 25px;
+          color: #666666;
         }
 
-        a {
+        .register a {
           color: #1976d2;
           text-decoration: none;
           font-weight: 500;
+          margin-left: 5px;
+          transition: all 0.3s ease;
         }
 
-        a:hover {
+        .register a:hover {
           text-decoration: underline;
+          color: #1565c0;
+        }
+
+        @media (max-width: 480px) {
+          .wrapper {
+            width: 100%;
+            padding: 30px 20px;
+          }
+
+          h2 {
+            font-size: 1.8rem;
+          }
         }
       `}</style>
     </div>
   );
 }
 
-export default ForgotPassword;
+export default ForgotPassword; 

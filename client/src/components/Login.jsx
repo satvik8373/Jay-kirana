@@ -26,7 +26,7 @@ function Login() {
       
       let response;
       if (isSignup) {
-        response = await axios.post(`${config.apiUrl}/register`, { 
+        response = await axios.post(`${config.apiUrl}/user/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
         });
@@ -38,7 +38,7 @@ function Login() {
         return;
       }
 
-      response = await axios.post(`${config.apiUrl}/login`, form);
+      response = await axios.post(`${config.apiUrl}/user/login`, form);
       console.log('Login response:', response.data);
 
       if (!response.data || !response.data.token || !response.data.user) {
