@@ -37,7 +37,7 @@ function AddProduct() {
   const fetchCategories = async () => {
     try {
       console.log('Fetching categories...');
-      const response = await api.get('/api/categories');
+      const response = await api.get('/categories');
       console.log('Categories response:', response.data);
       setCategories(response.data);
     } catch (err) {
@@ -97,7 +97,7 @@ function AddProduct() {
         packs
       };
 
-      const response = await api.post('/api/products', productData);
+      const response = await api.post('/products', productData);
       setSuccess('Product added successfully');
       setNewProduct({ name: '', category: '', price: '', stock: '', image: '' });
       setPacks([]);
@@ -122,7 +122,7 @@ function AddProduct() {
 
     try {
       console.log('Attempting to add category:', newCategory);
-      const response = await api.post('/api/categories', { name: newCategory });
+      const response = await api.post('/categories', { name: newCategory });
       console.log('Category added successfully:', response.data);
       setCategories([...categories, response.data]);
       setNewCategory('');
@@ -141,7 +141,7 @@ function AddProduct() {
 
   const updateCategory = async (id, newName) => {
     try {
-      const response = await api.put(`/api/categories/${id}`, { name: newName });
+      const response = await api.put(`/categories/${id}`, { name: newName });
       const updatedCategories = categories.map(cat => 
         cat._id === id ? response.data : cat
       );
@@ -160,7 +160,7 @@ function AddProduct() {
 
   const deleteCategory = async (id) => {
     try {
-      await api.delete(`/api/categories/${id}`);
+      await api.delete(`/categories/${id}`);
       setCategories(categories.filter(cat => cat._id !== id));
       setSuccess('Category deleted successfully');
     } catch (err) {
