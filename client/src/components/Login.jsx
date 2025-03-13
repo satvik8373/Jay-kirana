@@ -25,7 +25,7 @@ function Login() {
       console.log('API URL:', config.apiUrl);
       
       if (isSignup) {
-        await axios.post(`${config.apiUrl}/register`, { 
+        await axios.post(`${config.apiUrl}/api/register`, { 
           ...form, 
           name: form.email.split('@')[0] 
         });

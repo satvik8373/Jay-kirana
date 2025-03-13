@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         // Verify token and get user data
-        const response = await axios.get(`${config.apiUrl}/user/me`);
+        const response = await axios.get(`${config.apiUrl}/api/user/me`);
         const userData = response.data;
         
         setUser({
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
       console.log('Attempting login with:', { email });
       console.log('API URL:', config.apiUrl);
 
-      const response = await axios.post(`${config.apiUrl}/login`, {
+      const response = await axios.post(`${config.apiUrl}/api/login`, {
         email,
         password
       });
