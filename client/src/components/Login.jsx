@@ -160,18 +160,18 @@ function Login() {
           background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
           position: relative;
           overflow: hidden;
+          animation: fadeIn 0.3s ease;
         }
 
-        .auth-page::before {
-          content: "";
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
-          backdrop-filter: blur(100px);
-          -webkit-backdrop-filter: blur(100px);
-          z-index: 0;
-          top: 0;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .wrapper {
@@ -186,9 +186,22 @@ function Login() {
           position: relative;
           z-index: 1;
           margin: 40px auto;
+          animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .wrapper:hover {
+          transform: translateY(-2px);
           box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
           background: rgba(255, 255, 255, 0.95);
         }
@@ -209,6 +222,11 @@ function Login() {
           position: relative;
           border-bottom: 2px solid rgba(0, 0, 0, 0.1);
           margin: 25px 0;
+          transition: all 0.3s ease;
+        }
+
+        .input-field:focus-within {
+          border-color: #1976d2;
         }
 
         .input-field input {
@@ -220,6 +238,7 @@ function Login() {
           background: none;
           outline: none;
           color: #333333;
+          transition: all 0.3s ease;
         }
 
         .input-field input:focus ~ label,
@@ -279,12 +298,15 @@ function Login() {
           font-size: 16px;
           border: 2px solid transparent;
           transition: all 0.3s ease;
+          width: 100%;
+          position: relative;
+          overflow: hidden;
         }
 
         button:hover:not(:disabled) {
           background: #1565c0;
           box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
-          transform: translateY(-1px);
+          transform: translateY(-2px);
         }
 
         button:disabled {
@@ -293,7 +315,6 @@ function Login() {
         }
 
         button.loading {
-          position: relative;
           color: transparent;
         }
 
@@ -321,24 +342,30 @@ function Login() {
           color: #666666;
         }
 
-        .error-message {
-          background: rgba(244, 67, 54, 0.05);
-          color: #d32f2f;
-          padding: 10px;
-          border-radius: 8px;
+        .error-message,
+        .success-message {
+          animation: slideIn 0.3s ease;
           margin-bottom: 20px;
-          border: 1px solid rgba(244, 67, 54, 0.1);
+          padding: 12px;
+          border-radius: 8px;
           font-size: 14px;
+          transition: all 0.3s ease;
         }
 
-        .success-message {
-          background: rgba(76, 175, 80, 0.05);
-          color: #2e7d32;
-          padding: 10px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-          border: 1px solid rgba(76, 175, 80, 0.1);
-          font-size: 14px;
+        .error-message:hover,
+        .success-message:hover {
+          transform: translateY(-1px);
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .password-toggle {
@@ -363,6 +390,69 @@ function Login() {
 
         .password-toggle:hover svg {
           color: #1976d2;
+        }
+
+        @media (max-width: 480px) {
+          .auth-page {
+            padding: 20px 10px;
+            margin-top: 40px;
+          }
+
+          .wrapper {
+            width: 100%;
+            max-width: 350px;
+            padding: 30px 20px;
+            margin: 20px auto;
+          }
+
+          h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+          }
+
+          .input-field {
+            margin: 20px 0;
+          }
+
+          .input-field input {
+            font-size: 15px;
+          }
+
+          .input-field label {
+            font-size: 15px;
+          }
+
+          .forget {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+            margin: 10px 0 25px;
+          }
+
+          button {
+            padding: 12px 16px;
+            font-size: 15px;
+          }
+
+          .register {
+            margin-top: 25px;
+            font-size: 14px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .wrapper {
+            padding: 20px 15px;
+          }
+
+          h2 {
+            font-size: 1.6rem;
+          }
+
+          .input-field input,
+          .input-field label {
+            font-size: 14px;
+          }
         }
       `}</style>
     </div>

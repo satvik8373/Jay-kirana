@@ -568,6 +568,18 @@ function Profile() {
           margin: 0 auto;
           padding: 0 20px;
           position: relative;
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .profile-header-bg {
@@ -577,6 +589,7 @@ function Profile() {
           position: relative;
           border-radius: 0 0 30px 30px;
           margin-bottom: 60px;
+          transition: all 0.3s ease;
         }
 
         .profile-avatar {
@@ -598,8 +611,14 @@ function Profile() {
           transition: all 0.3s ease;
         }
 
+        .profile-avatar:hover {
+          transform: translateX(-50%) scale(1.05);
+          box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+
         .profile-avatar:hover .avatar-overlay {
           opacity: 1;
+          transform: translateY(0);
         }
 
         .avatar-image {
@@ -620,7 +639,8 @@ function Profile() {
           align-items: center;
           justify-content: center;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transform: translateY(5px);
+          transition: all 0.3s ease;
         }
 
         .camera-icon {
@@ -791,27 +811,31 @@ function Profile() {
 
         .error-message,
         .success-message {
+          margin: 15px 0;
+          padding: 12px 20px;
+          border-radius: 8px;
           position: relative;
-          padding-right: 40px; /* Space for dismiss button */
+          animation: slideIn 0.3s ease;
           cursor: pointer;
+          transition: all 0.3s ease;
         }
 
-        .dismiss-button {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: inherit;
-          cursor: pointer;
-          padding: 4px;
-          opacity: 0.7;
-          transition: opacity 0.2s;
+        .error-message {
+          background: rgba(244, 67, 54, 0.1);
+          color: #d32f2f;
+          border: 1px solid rgba(244, 67, 54, 0.2);
         }
 
-        .dismiss-button:hover {
-          opacity: 1;
+        .success-message {
+          background: rgba(76, 175, 80, 0.1);
+          color: #2e7d32;
+          border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .error-message:hover,
+        .success-message:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         @keyframes slideIn {
@@ -837,31 +861,81 @@ function Profile() {
         }
 
         @media (max-width: 768px) {
+          .profile-container {
+            padding: 0 15px;
+          }
+
           .profile-card {
-            padding: 24px;
-          }
-
-          .form-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-          }
-
-          .button-group {
-            flex-direction: column;
-          }
-
-          .profile-header {
-            flex-direction: column;
-            gap: 20px;
-          }
-
-          .edit-button {
-            width: 100%;
-            justify-content: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 15px;
           }
 
           .profile-header-bg {
             height: 160px;
+            margin-bottom: 50px;
+          }
+
+          .profile-avatar {
+            width: 100px;
+            height: 100px;
+            bottom: -50px;
+          }
+
+          .form-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+
+          .button-group {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .header-content h2 {
+            font-size: 1.5rem;
+          }
+
+          .subtitle {
+            font-size: 0.9rem;
+          }
+
+          input, textarea {
+            padding: 10px;
+            font-size: 0.95rem;
+          }
+
+          .form-group label {
+            font-size: 0.9rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .profile-container {
+            padding: 0 10px;
+          }
+
+          .profile-card {
+            padding: 15px;
+          }
+
+          .profile-header-bg {
+            height: 140px;
+            margin-bottom: 45px;
+          }
+
+          .profile-avatar {
+            width: 90px;
+            height: 90px;
+            bottom: -45px;
+          }
+
+          .header-content h2 {
+            font-size: 1.3rem;
+          }
+
+          .form-group {
+            margin-bottom: 12px;
           }
         }
 
