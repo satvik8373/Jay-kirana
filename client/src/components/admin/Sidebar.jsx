@@ -9,12 +9,12 @@ function Sidebar({ activeSection, setActiveSection }) {
       icon: FaShoppingCart
     },
     {
-      id: 'add_product',
+      id: 'add-product',
       label: 'Add Product',
       icon: FaPlus
     },
     {
-      id: 'manage_products',
+      id: 'manage-products',
       label: 'Manage Products',
       icon: FaBox
     },
@@ -24,7 +24,7 @@ function Sidebar({ activeSection, setActiveSection }) {
       icon: FaUsers
     },
     {
-      id: 'email_marketing',
+      id: 'email-marketing',
       label: 'Email Marketing',
       icon: FaEnvelope
     }
@@ -49,37 +49,34 @@ function Sidebar({ activeSection, setActiveSection }) {
 
       <style jsx>{`
         .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
           width: 250px;
           height: 100vh;
-          background: white;
-          position: fixed;
-          left: 0;
-          top: 0;
-          padding: 20px 0;
+          background-color: #1a237e;
+          color: white;
+          padding: 20px;
           box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
           z-index: 1000;
-          display: flex;
-          flex-direction: column;
         }
 
         .logo {
-          padding: 0 20px 20px;
-          border-bottom: 1px solid #eee;
-          margin-bottom: 20px;
+          margin-bottom: 30px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .logo h2 {
           margin: 0;
-          color: #1976d2;
           font-size: 1.5rem;
+          font-weight: 600;
         }
 
         nav {
-          flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 5px;
-          padding: 0 10px;
+          gap: 10px;
         }
 
         .nav-item {
@@ -89,37 +86,31 @@ function Sidebar({ activeSection, setActiveSection }) {
           padding: 12px 20px;
           border: none;
           background: none;
+          color: white;
+          font-size: 1rem;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.3s ease;
           width: 100%;
           text-align: left;
-          font-size: 1rem;
-          color: #666;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.3s ease;
         }
 
         .nav-item:hover {
-          background: #f5f5f5;
-          color: #1976d2;
+          background-color: rgba(255, 255, 255, 0.1);
         }
 
         .nav-item.active {
-          background: #1976d2;
-          color: white;
-        }
-
-        .nav-item svg {
-          font-size: 1.2rem;
+          background-color: rgba(255, 255, 255, 0.2);
+          font-weight: 600;
         }
 
         @media (max-width: 768px) {
           .sidebar {
-            width: 100%;
-            height: 60px;
-            padding: 10px;
-            bottom: 0;
             top: auto;
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            bottom: 0;
+            width: 100%;
+            height: auto;
+            padding: 10px;
           }
 
           .logo {
@@ -129,18 +120,18 @@ function Sidebar({ activeSection, setActiveSection }) {
           nav {
             flex-direction: row;
             justify-content: space-around;
-            padding: 0;
           }
 
           .nav-item {
             flex-direction: column;
-            padding: 5px;
+            padding: 8px;
             font-size: 0.8rem;
             gap: 5px;
+            text-align: center;
           }
 
           .nav-item svg {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
           }
         }
       `}</style>

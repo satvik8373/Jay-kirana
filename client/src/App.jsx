@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import MobileHeader from './components/MobileHeader';
 import Footer from './components/Footer';
@@ -16,22 +16,14 @@ import Users from './components/admin/Users';
 import './index.css';
 
 function ProtectedRoute({ children, requireAdmin }) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated, isAdmin } = useAuth();
   
-  // Show nothing while checking authentication
-  if (loading) {
-    return null;
-  }
-  
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" />;
   }
   
-  // Redirect to home if admin access is required but user is not admin
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" />;
   }
   
   return children;
@@ -57,29 +49,30 @@ function App() {
 
   const addToCart = (product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item._id === product._id);
+      const existingItem = prevCart.find(item => item.productId === product._id);
       if (existingItem) {
         return prevCart.map(item =>
-          item._id === product._id
+          item.productId === product._id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prevCart, { ...product, productId: product._id, quantity: 1 }];
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item._id !== productId));
+    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
   };
 
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return;
+  const updateQuantity = (productId, quantity) => {
+    if (quantity < 1) {
+      removeFromCart(productId);
+      return;
+    }
     setCart(prevCart =>
       prevCart.map(item =>
-        item._id === productId
-          ? { ...item, quantity: newQuantity }
-          : item
+        item.productId === productId ? { ...item, quantity } : item
       )
     );
   };
@@ -102,15 +95,11 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
-              
-              {/* Admin routes */}
               <Route path="/admin/*" element={
                 <ProtectedRoute requireAdmin={true}>
                   <Admin />
                 </ProtectedRoute>
               } />
-              
-              {/* Protected routes */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
@@ -140,11 +129,7 @@ function App() {
                   <Users />
                 </ProtectedRoute>
               } />
-              
-              {/* Catch all route */}
-              <Route path="*" element={
-                <Navigate to="/" replace />
-              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           <Footer />
