@@ -107,7 +107,7 @@ router.get('/user/profile', auth, async (req, res) => {
 });
 
 // User Registration (public)
-router.post('/register', async (req, res) => {
+router.post('/user/register', async (req, res) => {
   const { email, password, name } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -121,7 +121,7 @@ router.post('/register', async (req, res) => {
 });
 
 // User Login (public)
-router.post('/login', async (req, res) => {
+router.post('/user/login', async (req, res) => {
   try {
     console.log('Login attempt:', { email: req.body.email });
     
